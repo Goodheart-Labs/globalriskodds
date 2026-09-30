@@ -1,5 +1,18 @@
 # Claude session notes
 
+## /h5n1 page (2026-09-29)
+
+- URL-only `/h5n1` (no nav tab, Nathan's choice), prompted by Liz Specht's tweet on
+  H5N1 in Utah farmed mink. Shape per Nathan: markets + short sourced intro (hantavirus style).
+- Charts: Kalshi KXH5N1COUNT rungs A0 (1+) and A2 (3+) US human cases in 2026; Metaculus
+  45011 + 23387 (WHO PHEIC); Metaculus 41677 (H5N1 pandemic by 2030); Kalshi KXNEWOUTBREAK-P-26.
+- Fixes found on the way: seed derived the Kalshi series by splitting the ticker at the first
+  hyphen (wrong for KXNEWOUTBREAK-P), now read from the event; storeMarketHistory matched by
+  series, so ladder rungs overwrote each other, now pinned to `series#TICKER`.
+- Research notes: `tmp/2026-09-28-h5n1-mink-research.md` (88 sourced facts).
+- Seeded on dev only. Prod: after push, `seedInitialMarkets '{"only":["h5n1_us_cases","h5_pheic","h5n1_pandemic","any_pandemic_2026"]}' --prod`, then `fetchAllMarketHistory --prod`.
+- Commits: feat: /h5n1 page with mink intro; fix Kalshi series and ladder history matching
+
 ## El Niño read/review toggle + repo rename (2026-09-18)
 
 - Repo renamed `israel-iran-dashboard` → `globalriskodds` (local folder and GitHub

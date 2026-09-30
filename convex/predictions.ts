@@ -274,6 +274,55 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     chartColor: SOURCE_COLORS.polymarket, sortOrder: 15,
     shortLabel: "Polymarket",
   },
+
+  // ============================================================
+  // H5N1 DASHBOARD (rendered at /h5n1)
+  // Kalshi's "Above N" rungs: Above 0 = 1+ cases, Above 2 = 3+ cases.
+  // ============================================================
+
+  // --- Combined: US human H5N1 cases in 2026 (Kalshi ladder) ---
+  {
+    source: "kalshi", kalshiTicker: "KXH5N1COUNT-27JAN01-A0",
+    category: "pandemic", chartGroup: "h5n1_us_cases",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 30,
+    shortLabel: "1+ cases · Kalshi",
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXH5N1COUNT-27JAN01-A2",
+    category: "pandemic", chartGroup: "h5n1_us_cases",
+    chartColor: "#5EEAD4", sortOrder: 30,
+    shortLabel: "3+ cases · Kalshi",
+  },
+
+  // --- Combined: WHO bird flu emergency (two Metaculus questions, different deadlines) ---
+  {
+    source: "metaculus", metaculusId: 45011,
+    category: "pandemic", chartGroup: "h5_pheic",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 31,
+    shortLabel: "H5, before 2028 · Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 23387,
+    category: "pandemic", chartGroup: "h5_pheic",
+    chartColor: "#C4B5FD", sortOrder: 31,
+    shortLabel: "Avian flu, before 2030 · Metaculus",
+  },
+
+  // --- Standalone: WHO announces an H5N1 pandemic before 2030 (Metaculus) ---
+  {
+    source: "metaculus", metaculusId: 41677,
+    category: "pandemic", chartGroup: "h5n1_pandemic",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 32,
+    shortLabel: "Metaculus",
+  },
+
+  // --- Standalone: any disease becomes a pandemic in 2026 (Kalshi) ---
+  {
+    source: "kalshi", kalshiTicker: "KXNEWOUTBREAK-P-26",
+    category: "pandemic", chartGroup: "any_pandemic_2026",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 33,
+    shortLabel: "Kalshi",
+  },
   // ============================================================
   // EL NIÑO DASHBOARD (rendered at /el-nino)
   // RONI = NOAA CPC's Relative Oceanic Niño Index (climate-trend adjusted).
@@ -711,8 +760,9 @@ export const storeMarketHistory = mutation({
     let prediction = null;
 
     const slug = args.marketSlug || args.marketId;
+    // A "#TICKER" slug must match the whole fragment: "-A1" is a substring of "-A15".
     const matches = predictions.filter(
-      (p) => p.sourceUrl && p.sourceUrl.includes(slug)
+      (p) => p.sourceUrl && (slug.includes("#") ? p.sourceUrl.endsWith(slug) : p.sourceUrl.includes(slug))
     );
     // Prefer active prediction when multiple match the same slug
     prediction = matches.find((p) => p.isActive) || matches[0] || null;
@@ -992,7 +1042,8 @@ export const fetchAllMarketHistory = action({
         const storeResult: { success: boolean; stored: number } =
           await ctx.runMutation(api.predictions.storeMarketHistory, {
             marketId: ticker,
-            marketSlug: seriesSlug, // lowercase matches sourceUrl
+            // Pin the rung when the sourceUrl carries one, so ladder rungs sharing a series don't collide.
+            marketSlug: parsed.ticker ? `${seriesSlug}#${ticker}` : seriesSlug,
             historyData,
             source: "kalshi",
           });
@@ -1170,8 +1221,14 @@ export const seedInitialMarkets = action({
           probability = price;
           title = m.title;
           description = m.rules_primary?.slice(0, 500);
+          // Series tickers can contain hyphens (KXNEWOUTBREAK-P), so ask the event for its series.
+          const eventResp = await fetch(
+            `https://api.elections.kalshi.com/trade-api/v2/events/${m.event_ticker}`
+          );
+          if (!eventResp.ok) throw new Error(`Kalshi event API ${eventResp.status}`);
+          const seriesTicker: string = (await eventResp.json()).event.series_ticker;
           // The fragment pins the exact ticker for the poller; kalshi.com ignores it.
-          sourceUrl = `https://kalshi.com/markets/${m.ticker.split('-')[0].toLowerCase()}#${m.ticker}`;
+          sourceUrl = `https://kalshi.com/markets/${seriesTicker.toLowerCase()}#${m.ticker}`;
           resolveDate = m.expiration_time ? new Date(m.expiration_time).getTime() : undefined;
 
         } else if (config.source === "metaculus" && config.metaculusId) {
