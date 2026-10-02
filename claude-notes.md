@@ -11,7 +11,7 @@
   series, so ladder rungs overwrote each other, now pinned to `series#TICKER`.
 - Research notes: `tmp/2026-09-28-h5n1-mink-research.md` (88 sourced facts).
 - Seeded on dev only. Prod: after push, `seedInitialMarkets '{"only":["h5n1_us_cases","h5_pheic","h5n1_pandemic","any_pandemic_2026"]}' --prod`, then `fetchAllMarketHistory --prod`.
-- Commits: feat: /h5n1 page with mink intro; fix Kalshi series and ladder history matching
+- Commits: feat: /h5n1 page with mink intro; fix Kalshi series and ladder history matching · feat: hide the locked AI risk page from the nav (URL still works)
 
 ## El Niño read/review toggle + repo rename (2026-09-18)
 
