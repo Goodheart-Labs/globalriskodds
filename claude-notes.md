@@ -1,5 +1,18 @@
 # Claude session notes
 
+## /ipo giving-windfall card (2026-10-03)
+
+- Nathan asked to add the Metaculus EA Forum post "Mapping the AI IPO Windfall" (30 Sep 2026) to /ipo.
+- New card `src/components/IpoWindfall.tsx`, after "How the implied IPO dates have moved": live Metaculus
+  tiles (market cap at lockup end, 45334/44912; P(lockup ≥180d), 44793/44795) plus four dated, sourced
+  estimates (Metaculus $25.7B, Weiner $12–32B DAFs, Ransohoff $37B/yr, Ford $37.8B).
+- Fetched in `refreshIpoCurves` into `forecastCurves` under `:lockup` topics (t = dollars or days, not ms).
+- Source checks: the post's "GWWC expects $15B/yr" traces via Gizmodo to Ransohoff's Anthropic-only share,
+  so it is a footnote, not a row; Ford's figure is $37.8B (post says $37.9B); Weiner includes SpaceX;
+  post says $25.7B then $24.5B (Radiant map is behind Cloudflare, unchecked). Raw post: `tmp/2026-10-03-ea-ipo-windfall.md`.
+- Dev refreshed. Prod: after push, `pnpx convex run ipoCurves:refreshIpoCurves --prod` (else tiles empty until the hourly cron).
+- Commits: feat: giving-windfall card on /ipo with live Metaculus lockup forecasts
+
 ## /h5n1 page (2026-09-29)
 
 - URL-only `/h5n1` (no nav tab, Nathan's choice), prompted by Liz Specht's tweet on

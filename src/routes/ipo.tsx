@@ -10,6 +10,7 @@ import { EditableInfo } from "@/components/EditableInfo";
 import { ChartVote } from "@/components/ChartVote";
 import { VotedCard } from "@/components/VotedCard";
 import { ImpliedDateChart } from "@/components/ImpliedDateChart";
+import { IpoWindfall } from "@/components/IpoWindfall";
 import {
   ValuationAlternatives,
   type ValuationForecast,
@@ -479,6 +480,8 @@ function IpoPage() {
           <ChartVote slot="ipo:implied-dates-over-time" />
         </div>
       </VotedCard>
+
+      <IpoWindfall curves={curves} companies={COMPANIES} />
 
       {/* Per company: each source on its own */}
       {ladders.map((company) => (

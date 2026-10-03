@@ -135,7 +135,8 @@ export default defineSchema({
     label: v.string(), // shown in the chart legend
     sourceUrl: v.optional(v.string()),
     note: v.optional(v.string()), // caveat, e.g. announcement ≠ completion
-    points: v.array(v.object({ t: v.number(), p: v.number() })), // t ms, p 0-1
+    // t ms, p 0-1. The ":lockup" topics store other units; see ipoCurves.ts.
+    points: v.array(v.object({ t: v.number(), p: v.number() })),
     // How this source's implied date has moved: t = when the forecast was
     // made, impliedT = the date it pointed at. Only sources that publish a
     // history have this.

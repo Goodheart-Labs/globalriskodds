@@ -33,6 +33,37 @@ const METACULUS_QUESTIONS = [
   },
 ];
 
+// Inputs to Metaculus's AI IPO windfall map, shown in the giving card. Stored
+// like the curves, but t is not a date: for market cap it is dollars at the
+// 25th, 50th and 75th percentiles; for lockup length it is each option's lower
+// bound in days (">180" stored as 181), with p that option's probability.
+const METACULUS_LOCKUP_QUESTIONS = [
+  {
+    key: "ipo_anthropic:lockup-cap",
+    topic: "ipo_anthropic:lockup",
+    postId: 45334,
+    label: "Market cap when the lockup ends",
+  },
+  {
+    key: "ipo_openai:lockup-cap",
+    topic: "ipo_openai:lockup",
+    postId: 44912,
+    label: "Market cap when the lockup ends",
+  },
+  {
+    key: "ipo_anthropic:lockup-days",
+    topic: "ipo_anthropic:lockup",
+    postId: 44793,
+    label: "Employee lockup length",
+  },
+  {
+    key: "ipo_openai:lockup-days",
+    topic: "ipo_openai:lockup",
+    postId: 44795,
+    label: "Employee lockup length",
+  },
+];
+
 const KALSHI_LADDERS = [
   {
     key: "ipo_anthropic:kalshi",
@@ -54,6 +85,25 @@ const KALSHI_NOTE =
   "Kalshi asks when an IPO will be officially announced — an earlier event than the listing itself. Priced from order-book midpoints because its API reports no last price for these markets.";
 
 type Point = { t: number; p: number };
+
+type Scaling = {
+  range_min: number;
+  range_max: number;
+  zero_point?: number | null;
+};
+
+/** A 0-1 position on a Metaculus question's range, in the question's units. */
+function fromUnit(scaling: Scaling, frac: number): number {
+  return scaling.zero_point == null
+    ? scaling.range_min + (scaling.range_max - scaling.range_min) * frac
+    : scaling.zero_point +
+        (scaling.range_min - scaling.zero_point) *
+          Math.pow(
+            (scaling.range_max - scaling.zero_point) /
+              (scaling.range_min - scaling.zero_point),
+            frac,
+          );
+}
 
 export const storeCurve = internalMutation({
   args: {
@@ -123,32 +173,11 @@ export const refreshIpoCurves = action({
         const step = Math.max(1, Math.floor(cdf.length / 40));
         for (let i = 0; i < cdf.length; i += step) {
           const frac = i / (cdf.length - 1);
-          const seconds =
-            scaling.zero_point == null
-              ? scaling.range_min +
-                (scaling.range_max - scaling.range_min) * frac
-              : scaling.zero_point +
-                (scaling.range_min - scaling.zero_point) *
-                  Math.pow(
-                    (scaling.range_max - scaling.zero_point) /
-                      (scaling.range_min - scaling.zero_point),
-                    frac,
-                  );
-          points.push({ t: seconds * 1000, p: cdf[i] });
+          points.push({ t: fromUnit(scaling, frac) * 1000, p: cdf[i] });
         }
 
         // Where this question's community centre has pointed over time.
-        const toDate = (frac: number) =>
-          (scaling.zero_point == null
-            ? scaling.range_min +
-              (scaling.range_max - scaling.range_min) * frac
-            : scaling.zero_point +
-              (scaling.range_min - scaling.zero_point) *
-                Math.pow(
-                  (scaling.range_max - scaling.zero_point) /
-                    (scaling.range_min - scaling.zero_point),
-                  frac,
-                )) * 1000;
+        const toDate = (frac: number) => fromUnit(scaling, frac) * 1000;
 
         const rawHistory = q?.aggregations?.recency_weighted?.history ?? [];
         const medianHistory = rawHistory
@@ -166,6 +195,55 @@ export const refreshIpoCurves = action({
           sourceUrl: `https://www.metaculus.com/questions/${question.postId}/`,
           points,
           medianHistory,
+        });
+        stored.push(question.key);
+      } catch (error) {
+        failed.push(`${question.key}: ${String(error)}`);
+      }
+    }
+
+    for (const question of METACULUS_LOCKUP_QUESTIONS) {
+      try {
+        const res = await fetch(
+          `https://www.metaculus.com/api/posts/${question.postId}/`,
+          apiKey ? { headers: { Authorization: `Token ${apiKey}` } } : {},
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const q = data.question;
+        const latest = q?.aggregations?.recency_weighted?.latest;
+
+        let points: Point[];
+        if (q?.type === "multiple_choice") {
+          const options: string[] = q.options ?? [];
+          points = options.map((option, i) => ({
+            t: option.startsWith(">")
+              ? Number(option.slice(1)) + 1
+              : parseInt(option, 10),
+            p: latest?.forecast_values?.[i],
+          }));
+        } else {
+          const scaling = q?.scaling;
+          points = [
+            [latest?.interval_lower_bounds?.[0], 0.25],
+            [latest?.centers?.[0], 0.5],
+            [latest?.interval_upper_bounds?.[0], 0.75],
+          ].map(([frac, p]) => ({ t: fromUnit(scaling, frac), p }));
+        }
+        if (
+          points.length < 2 ||
+          points.some((pt) => !Number.isFinite(pt.t) || !Number.isFinite(pt.p))
+        ) {
+          throw new Error("no forecast");
+        }
+
+        await ctx.runMutation(internal.ipoCurves.storeCurve, {
+          key: question.key,
+          topic: question.topic,
+          source: "metaculus",
+          label: question.label,
+          sourceUrl: `https://www.metaculus.com/questions/${question.postId}/`,
+          points,
         });
         stored.push(question.key);
       } catch (error) {
