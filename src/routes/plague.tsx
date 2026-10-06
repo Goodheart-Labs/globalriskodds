@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   TopicDashboard,
@@ -11,10 +11,12 @@ import {
 } from "@/components/TopicDashboard";
 import { ItemVote } from "@/components/ItemVote";
 import { ChartVote } from "@/components/ChartVote";
+import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { VotedCard } from "@/components/VotedCard";
 import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { mergeMarketHistory } from "@/lib/marketPresentation";
 import { median, probabilityColor, probabilityWord } from "@/lib/probabilityWords";
+import { chartScore } from "@/lib/helpfulness";
 
 const GROUP_TITLES: Record<string, string> = {
   plague_new_case_russia: "New pneumonic plague case in Russia",
@@ -345,28 +347,93 @@ function SectionLabel({ children }: { children: ReactNode }) {
   return <h2 className="not-prose risk-kicker mt-0 border-t border-base-content/80 pt-3">{children}</h2>;
 }
 
+function SourceRow({ n, text, url, source, slot, votes, reader }: {
+  n: number; text: string; url?: string; source: string; slot: string; votes: Vote[]; reader?: boolean;
+}) {
+  return (
+    <li id={`s-${n}`} className="flex scroll-mt-24 gap-3 border-b border-base-300 py-3 transition-colors target:bg-warning/15">
+      <span className="w-5 shrink-0 text-right text-xs opacity-50 tabular-nums">{n}</span>
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="leading-snug">
+          {text}{" "}
+          {url
+            ? <a href={url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-xs underline opacity-60 hover:opacity-100">{source} ↗</a>
+            : <span className="whitespace-nowrap text-xs opacity-60">{source}</span>}
+          {reader && <span className="ml-1 whitespace-nowrap text-xs opacity-50">· added by a reader</span>}
+        </p>
+        <ItemVote slot={slot} votes={votes} expanded />
+      </div>
+    </li>
+  );
+}
+
+/** A link's host, for the source label. Never throws: bad links just lose the label. */
+function hostOf(url: string | undefined): string {
+  if (!url) return "no source given";
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "source";
+  }
+}
+
+function AddSource() {
+  const addCaveat = useMutation(api.caveats.addCaveat);
+  const [text, setText] = useState("");
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const submit = async () => {
+    if (!text.trim()) return;
+    setError(null);
+    try {
+      await addCaveat({ topic: "plague", content: text, url: url || undefined });
+      setText(""); setUrl(""); setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That did not save.");
+    }
+  };
+
+  return (
+    <div className="mt-5">
+      <label className="mb-2 block text-sm font-medium" htmlFor="add-source">Add a source</label>
+      <textarea id="add-source" rows={2} value={text} maxLength={600}
+        onChange={(e) => { setText(e.target.value); setDone(false); }}
+        placeholder="A fact that belongs on this page"
+        className="textarea w-full text-sm" />
+      <div className="mt-2 flex flex-wrap gap-2">
+        <input type="url" value={url} onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://link-to-the-source" className="input input-sm min-w-0 flex-1 text-sm" />
+        <button type="button" className="btn btn-sm btn-neutral" disabled={!text.trim()} onClick={() => void submit()}>Add</button>
+      </div>
+      {error && <p className="mt-2 text-sm text-error">{error}</p>}
+      {done && <p className="mt-2 text-sm text-success">Added — readers vote on what stays near the top.</p>}
+    </div>
+  );
+}
+
 function Sources({ statements }: { statements: Statement[] }) {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
+  const reader = useQuery(api.caveats.listForTopic, { topic: "plague" }) ?? [];
+  const readerSorted = [...reader].sort(
+    (a, b) => chartScore(votes.filter((v) => v.slot === `plague:reader:${b._id}`))
+      - chartScore(votes.filter((v) => v.slot === `plague:reader:${a._id}`)),
+  );
   return (
     <section className="not-prose mx-auto mt-16 max-w-[680px]">
       <SectionLabel>Sources</SectionLabel>
-      <ol className="text-sm">
-        {statements.map((s, i) => (
-          <li key={s.id} id={`s-${i + 1}`}
-            className="flex scroll-mt-24 gap-3 border-b border-base-300 py-3 transition-colors target:bg-warning/15">
-            <span className="w-5 shrink-0 text-right text-xs opacity-50 tabular-nums">{i + 1}</span>
-            <div className="min-w-0 flex-1 space-y-2">
-              <p className="leading-snug">
-                {s.text}{" "}
-                {s.url
-                  ? <a href={s.url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-xs underline opacity-60 hover:opacity-100">{s.source} ↗</a>
-                  : <span className="whitespace-nowrap text-xs opacity-60">{s.source}</span>}
-              </p>
-              <ItemVote slot={slotOf(s.id)} votes={votes} expanded />
-            </div>
-          </li>
+      <ol>
+        {statements.map((st, i) => (
+          <SourceRow key={st.id} n={i + 1} text={st.text} url={st.url} source={st.source} slot={slotOf(st.id)} votes={votes} />
+        ))}
+        {readerSorted.map((c, i) => (
+          <SourceRow key={c._id} n={statements.length + i + 1} text={c.content} url={c.url}
+            source={hostOf(c.url)}
+            slot={`plague:reader:${c._id}`} votes={votes} reader />
         ))}
       </ol>
+      <AddSource />
     </section>
   );
 }
@@ -422,7 +489,10 @@ function PlaguePage() {
       voteMode="expanded"
       intro={<><Summary statements={statements} /><SectionLabel>The markets</SectionLabel></>}
       extraCards={<FutureSearchCard />}
-      footer={<Sources statements={statements} />}
+      footer={<>
+        <Sources statements={statements} />
+        <div className="mx-auto mt-10 max-w-[680px]"><SuggestionsPanel topic="plague" placeholder="e.g. Will Russia name the pathogen before 2027?" /></div>
+      </>}
     />
   );
 }

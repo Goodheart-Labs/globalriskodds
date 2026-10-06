@@ -27,10 +27,13 @@ async function getIpHash(): Promise<string> {
 export function SuggestionsPanel({
   standalone = false,
   topic,
+  placeholder = "e.g. Will Iran conduct a nuclear test before 2027?",
 }: {
   standalone?: boolean;
   /** Scope to one dashboard; omit on the Requests page to show everything. */
   topic?: string;
+  /** An example question from this dashboard's subject. */
+  placeholder?: string;
 }) {
   const suggestions = useQuery(api.suggestions.listActive, { topic }) ?? [];
   const submitMutation = useMutation(api.suggestions.submit);
@@ -114,7 +117,7 @@ export function SuggestionsPanel({
         <input
           type="text"
           className="input input-bordered flex-1 text-sm"
-          placeholder="e.g. Will Iran conduct a nuclear test before 2027?"
+          placeholder={placeholder}
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={300}

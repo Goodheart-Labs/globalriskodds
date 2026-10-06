@@ -43,6 +43,7 @@ export const listForTopic = query({
           _id: caveat._id,
           content: revisions[0]?.content ?? caveat.content,
           originalContent: caveat.content,
+          url: caveat.url,
           author: caveat.author,
           pinned: caveat.pinned,
           createdAt: caveat.createdAt,
@@ -68,14 +69,18 @@ export const addCaveat = mutation({
   args: {
     topic: v.string(),
     content: v.string(),
+    url: v.optional(v.string()),
     author: v.optional(v.string()),
   },
-  handler: async (ctx, { topic, content, author }) => {
+  handler: async (ctx, { topic, content, url, author }) => {
     const trimmed = content.trim().slice(0, 600);
     if (!trimmed) throw new Error("A caveat needs some text.");
+    const link = url?.trim().slice(0, 500);
+    if (link && !/^https?:\/\//i.test(link)) throw new Error("A source link must start with http:// or https://");
     return ctx.db.insert("caveats", {
       topic,
       content: trimmed,
+      url: link || undefined,
       author: author?.trim().slice(0, 60) || undefined,
       pinned: false,
       createdAt: Date.now(),

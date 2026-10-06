@@ -33,6 +33,11 @@
   chart); FutureSearch's direct 1% shown as a cross-check. Forecasters link directly; Sources holds only facts
   and Claude's 2% (Nathan: market quotes don't belong in Sources). Word ladder gained 1% "Almost certainly not"
   (ICD 203 puts "very unlikely" at 5-20%). Headline 5 Oct night: 16% x 2% = 0.3%.
+- Reader contributions (Nathan: "can there be a way to add statements or suggest adding markets?"): `caveats`
+  gained an optional `url` (schema + addCaveat, validates http(s)); reader entries render INSIDE the Sources
+  list (numbered after the editorial ones, "added by a reader", host as the label, ItemVote on
+  `plague:reader:<id>`, sorted by score) rather than a separate box. `SuggestionsPanel topic="plague"` with a
+  new `placeholder` prop below it. Verified end-to-end on dev with Playwright.
 - Then (Nathan): FutureSearch as its own card in the grid (two big numbers, reasoning link, votes), not a chart
   line until there are repeat runs; it still counts toward the middle. Cross-check line and chart caption cut
   ("fewer things, minimalism"). `TopicDashboard` gained `extraCards`.

@@ -154,6 +154,7 @@ export default defineSchema({
   caveats: defineTable({
     topic: v.string(), // e.g. "ipo"
     content: v.string(),
+    url: v.optional(v.string()), // the source backing it, where the reader gave one
     author: v.optional(v.string()),
     pinned: v.boolean(), // site-authored, sorts first
     createdAt: v.number(),
