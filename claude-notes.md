@@ -1,5 +1,40 @@
 # Claude session notes
 
+## /plague page (2026-10-05)
+
+- Nathan: "Make a global risk odds page on the plague thing. Have it be like the bird flu risk", then
+  "Including text saying 'Unlikely' or whatever". Plague thing = Irkutsk Anti-Plague Institute lab worker
+  who died of pneumonia overnight into 2 Oct. "Bird flu risk" = birdflurisk.com shape: question as h1,
+  big coloured probability word, one index number, then the markets.
+- URL-only `/plague` (no nav tab, matching /h5n1 and /hantavirus). Word ladder copied from birdflurisk into
+  `src/lib/probabilityWords.ts`.
+- Headline = median (two inputs, so the mean) of Polymarket "new pneumonic case in Russia by 31 Oct" and
+  Kalshi "2+ confirmed Irkutsk cases before 1 Nov": each resolves Yes only if someone besides the lab worker
+  is confirmed. 5+ rung left out (bigger outbreak). Kalshi 1+ counts her posthumously, so excluded.
+- Cards: Polymarket new case (15/31 Oct), Kalshi KXPLAGUECOUNT 1+/2+/5+, KXIRKUTSKPATHOGEN, Polymarket PHEIC
+  (30 Nov/31 Dec), Polymarket plague pandemic 2026, Kalshi KXPNEUMONICPLAGUE (US, 1 Dec/2027).
+- Intro facts verbatim-checked: CBS (WHO death date, ~200 contacts, no accident, WHO "risk ... low"), WHO
+  plague fact sheet, Northeastern (Scarpino). Manifold has three Irkutsk markets but no poller here.
+- Dev seeded. Prod: after push, seed with `--prod` for the six plague_* chartGroups, then history.
+- Redesign same day, Nathan: "more like the spilled ink pages", sources at the bottom tied to the text, vote
+  on/off switch top right, fix the left-text/centred-word mismatch. Now: centred serif hero (kicker, title,
+  word, one line), 680px serif summary with boxed numbered citations jumping to `#s-n`, markets grid, then a
+  numbered Sources list. Then (Nathan): no kicker, no Read/Review toggle, votes always on; hovering a citation
+  opens a card with the source, its link and ItemVote (click pins; tap on mobile).
+  `TopicDashboard` gained an optional `header` slot. Source vote slots = `plague:source:<id>`.
+- Reframed (Nathan: "surely the question is: will people in the West get the plague?"): title "Will the Russian
+  plague spread to the West?". US already averages ~7 plague cases/yr (CDC), so the headline is linked cases in
+  Europe/North America by 1 Nov = spread (median of the two markets) x WEST_GIVEN_SPREAD (Claude's 2%, range
+  0.5-5%; basis: Madagascar 2017, 2,348 cases, 1,791 pneumonic, WHO "no reported cases related to international
+  travel"; likeliest next cases are contacts under observation). Shown as a three-term equation with
+  citations, then a central chart of the two markets plus their computed middle (mergeMarketHistory).
+- Earlier title "Will the Russian plague spread?": X counts 5 Oct, "Russian plague" 2,568 posts/week vs "Irkutsk plague" 205.
+- Metaculus has no plague question; nearest is 40259 (WHO announces a non-H5N1 pandemic before 2027), not added.
+- Commits: feat: /plague page on the Irkutsk lab death with birdflurisk-style headline word · feat: centre the
+  plague headline word, cut page wording · feat: /plague in Spilled Ink shape (cited summary, sources, Read/Review) · feat: /plague
+  citations open a vote card on hover; drop the toggle and kicker · feat: /plague
+  asks about the West: market spread odds x Claude's factor, central chart
+
 ## /ipo giving-windfall card (2026-10-03)
 
 - Nathan asked to add the Metaculus EA Forum post "Mapping the AI IPO Windfall" (30 Sep 2026) to /ipo.

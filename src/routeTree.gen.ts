@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as WishlistImport } from './routes/wishlist'
 import { Route as StatusImport } from './routes/status'
+import { Route as PlagueImport } from './routes/plague'
 import { Route as OriginalImport } from './routes/original'
 import { Route as MaintenanceImport } from './routes/maintenance'
 import { Route as IpoImport } from './routes/ipo'
@@ -37,6 +38,12 @@ const WishlistRoute = WishlistImport.update({
 const StatusRoute = StatusImport.update({
   id: '/status',
   path: '/status',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PlagueRoute = PlagueImport.update({
+  id: '/plague',
+  path: '/plague',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -200,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OriginalImport
       parentRoute: typeof rootRoute
     }
+    '/plague': {
+      id: '/plague'
+      path: '/plague'
+      fullPath: '/plague'
+      preLoaderRoute: typeof PlagueImport
+      parentRoute: typeof rootRoute
+    }
     '/status': {
       id: '/status'
       path: '/status'
@@ -232,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
+  '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
   '/wishlist': typeof WishlistRoute
 }
@@ -249,6 +264,7 @@ export interface FileRoutesByTo {
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
+  '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
   '/wishlist': typeof WishlistRoute
 }
@@ -267,6 +283,7 @@ export interface FileRoutesById {
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
+  '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
   '/wishlist': typeof WishlistRoute
 }
@@ -286,6 +303,7 @@ export interface FileRouteTypes {
     | '/ipo'
     | '/maintenance'
     | '/original'
+    | '/plague'
     | '/status'
     | '/wishlist'
   fileRoutesByTo: FileRoutesByTo
@@ -302,6 +320,7 @@ export interface FileRouteTypes {
     | '/ipo'
     | '/maintenance'
     | '/original'
+    | '/plague'
     | '/status'
     | '/wishlist'
   id:
@@ -318,6 +337,7 @@ export interface FileRouteTypes {
     | '/ipo'
     | '/maintenance'
     | '/original'
+    | '/plague'
     | '/status'
     | '/wishlist'
   fileRoutesById: FileRoutesById
@@ -336,6 +356,7 @@ export interface RootRouteChildren {
   IpoRoute: typeof IpoRoute
   MaintenanceRoute: typeof MaintenanceRoute
   OriginalRoute: typeof OriginalRoute
+  PlagueRoute: typeof PlagueRoute
   StatusRoute: typeof StatusRoute
   WishlistRoute: typeof WishlistRoute
 }
@@ -353,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   IpoRoute: IpoRoute,
   MaintenanceRoute: MaintenanceRoute,
   OriginalRoute: OriginalRoute,
+  PlagueRoute: PlagueRoute,
   StatusRoute: StatusRoute,
   WishlistRoute: WishlistRoute,
 }
@@ -379,6 +401,7 @@ export const routeTree = rootRoute
         "/ipo",
         "/maintenance",
         "/original",
+        "/plague",
         "/status",
         "/wishlist"
       ]
@@ -418,6 +441,9 @@ export const routeTree = rootRoute
     },
     "/original": {
       "filePath": "original.tsx"
+    },
+    "/plague": {
+      "filePath": "plague.tsx"
     },
     "/status": {
       "filePath": "status.tsx"

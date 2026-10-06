@@ -68,6 +68,7 @@ export function TopicDashboard({
   groupKeys,
   intro,
   footer,
+  header,
   headerActions,
   voteMode = "collapsed",
 }: {
@@ -84,6 +85,8 @@ export function TopicDashboard({
   /** Rendered between the title block and the chart grid. */
   intro?: ReactNode;
   footer?: ReactNode;
+  /** Replaces the default title and subtitle block. */
+  header?: ReactNode;
   /** Rendered top right, beside the theme button. */
   headerActions?: ReactNode;
   /** How the per-chart "is this helpful?" control shows. */
@@ -182,13 +185,15 @@ export function TopicDashboard({
         </button>
       </div>
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-1">{title}</h1>
-        <p className="text-sm opacity-50">
-          {subtitle ??
-            "Forecasting data from Polymarket, Kalshi, and Metaculus"}
-        </p>
-      </div>
+      {header ?? (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-1">{title}</h1>
+          <p className="text-sm opacity-50">
+            {subtitle ??
+              "Forecasting data from Polymarket, Kalshi, and Metaculus"}
+          </p>
+        </div>
+      )}
 
       {intro}
 

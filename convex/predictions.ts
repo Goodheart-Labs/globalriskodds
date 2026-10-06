@@ -324,6 +324,90 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     shortLabel: "Kalshi",
   },
   // ============================================================
+  // PLAGUE DASHBOARD (rendered at /plague)
+  // Irkutsk Anti-Plague Institute lab worker died of pneumonia, 2 Oct 2026.
+  // Kalshi's Irkutsk ladder counts her if she is confirmed posthumously;
+  // Polymarket's Russia market excludes her.
+  // ============================================================
+
+  // --- Combined: a new pneumonic plague case confirmed in Russia (Polymarket) ---
+  {
+    source: "polymarket", marketSlug: "next-confirmed-pneumonic-plague-case-in-russia-20261003t000000000z-will-a-new-pneumonic-plague-case-be-confirmed-in-russia-by-october-15-2026",
+    category: "pandemic", chartGroup: "plague_new_case_russia",
+    chartColor: "#93C5FD", sortOrder: 40,
+    shortLabel: "by 15 Oct · Polymarket",
+  },
+  {
+    source: "polymarket", marketSlug: "next-confirmed-pneumonic-plague-case-in-russia-20261003t000000000z-will-a-new-pneumonic-plague-case-be-confirmed-in-russia-by-october-31-2026",
+    category: "pandemic", chartGroup: "plague_new_case_russia",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 40,
+    shortLabel: "by 31 Oct · Polymarket",
+  },
+
+  // --- Combined: confirmed plague cases in Irkutsk Oblast before 1 Nov (Kalshi ladder) ---
+  {
+    source: "kalshi", kalshiTicker: "KXPLAGUECOUNT-26NOV01-A1",
+    category: "pandemic", chartGroup: "plague_irkutsk_cases",
+    chartColor: "#5EEAD4", sortOrder: 41,
+    shortLabel: "1+ cases · Kalshi",
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXPLAGUECOUNT-26NOV01-A2",
+    category: "pandemic", chartGroup: "plague_irkutsk_cases",
+    chartColor: "#14B8A6", sortOrder: 41,
+    shortLabel: "2+ cases · Kalshi",
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXPLAGUECOUNT-26NOV01-A5",
+    category: "pandemic", chartGroup: "plague_irkutsk_cases",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 41,
+    shortLabel: "5+ cases · Kalshi",
+  },
+
+  // --- Standalone: Rospotrebnadzor names the pathogen before 1 Nov (Kalshi) ---
+  {
+    source: "kalshi", kalshiTicker: "KXIRKUTSKPATHOGEN-26OCT-26NOV01",
+    category: "pandemic", chartGroup: "plague_pathogen_named",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 42,
+    shortLabel: "Kalshi",
+  },
+
+  // --- Combined: WHO declares a plague PHEIC (Polymarket) ---
+  {
+    source: "polymarket", marketSlug: "will-the-who-declare-a-pheic-for-plague-by-november-30",
+    category: "pandemic", chartGroup: "plague_pheic",
+    chartColor: "#93C5FD", sortOrder: 43,
+    shortLabel: "by 30 Nov · Polymarket",
+  },
+  {
+    source: "polymarket", marketSlug: "will-the-who-declare-a-pheic-for-plague-by-december-31",
+    category: "pandemic", chartGroup: "plague_pheic",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 43,
+    shortLabel: "by 31 Dec · Polymarket",
+  },
+
+  // --- Standalone: WHO calls plague a pandemic in 2026 (Polymarket) ---
+  {
+    source: "polymarket", slug: "plague-pandemic-in-2026",
+    category: "pandemic", chartGroup: "plague_pandemic",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 44,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Combined: a pneumonic plague case confirmed in the US (Kalshi) ---
+  {
+    source: "kalshi", kalshiTicker: "KXPNEUMONICPLAGUE-01JAN27-01DEC26",
+    category: "pandemic", chartGroup: "plague_us_pneumonic",
+    chartColor: "#5EEAD4", sortOrder: 45,
+    shortLabel: "before 1 Dec · Kalshi",
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXPNEUMONICPLAGUE-01JAN27-01JAN27",
+    category: "pandemic", chartGroup: "plague_us_pneumonic",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 45,
+    shortLabel: "before 2027 · Kalshi",
+  },
+  // ============================================================
   // EL NIÑO DASHBOARD (rendered at /el-nino)
   // RONI = NOAA CPC's Relative Oceanic Niño Index (climate-trend adjusted).
   // CPC's table peaks: 1982-83 at 2.4, 1997-98 and 2015-16 at 2.3, so a
