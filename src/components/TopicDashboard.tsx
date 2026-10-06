@@ -69,6 +69,7 @@ export function TopicDashboard({
   intro,
   footer,
   header,
+  extraCards,
   headerActions,
   voteMode = "collapsed",
 }: {
@@ -87,6 +88,8 @@ export function TopicDashboard({
   footer?: ReactNode;
   /** Replaces the default title and subtitle block. */
   header?: ReactNode;
+  /** Cards rendered in the grid after the market charts. */
+  extraCards?: ReactNode;
   /** Rendered top right, beside the theme button. */
   headerActions?: ReactNode;
   /** How the per-chart "is this helpful?" control shows. */
@@ -199,6 +202,7 @@ export function TopicDashboard({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {currentGroups.map(renderGroup)}
+        {extraCards}
 
         {ungrouped.map((market) => (
           <SingleCard key={market._id} market={market} />

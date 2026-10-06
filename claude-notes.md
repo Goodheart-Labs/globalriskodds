@@ -33,6 +33,9 @@
   chart); FutureSearch's direct 1% shown as a cross-check. Forecasters link directly; Sources holds only facts
   and Claude's 2% (Nathan: market quotes don't belong in Sources). Word ladder gained 1% "Almost certainly not"
   (ICD 203 puts "very unlikely" at 5-20%). Headline 5 Oct night: 16% x 2% = 0.3%.
+- Then (Nathan): FutureSearch as its own card in the grid (two big numbers, reasoning link, votes), not a chart
+  line until there are repeat runs; it still counts toward the middle. Cross-check line and chart caption cut
+  ("fewer things, minimalism"). `TopicDashboard` gained `extraCards`.
 - Earlier title "Will the Russian plague spread?": X counts 5 Oct, "Russian plague" 2,568 posts/week vs "Irkutsk plague" 205.
 - Metaculus has no plague question; nearest is 40259 (WHO announces a non-H5N1 pandemic before 2027), not added.
 - Commits: feat: /plague page on the Irkutsk lab death with birdflurisk-style headline word · feat: centre the

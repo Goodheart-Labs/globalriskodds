@@ -10,6 +10,8 @@ import {
   type Market,
 } from "@/components/TopicDashboard";
 import { ItemVote } from "@/components/ItemVote";
+import { ChartVote } from "@/components/ChartVote";
+import { VotedCard } from "@/components/VotedCard";
 import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { mergeMarketHistory } from "@/lib/marketPresentation";
 import { median, probabilityColor, probabilityWord } from "@/lib/probabilityWords";
@@ -273,31 +275,50 @@ function Chain({ spread, parts, statements }: { spread: number; parts: Input[]; 
       <ChainTerm value={pct(WEST_GIVEN_SPREAD)} label="If so, it reaches the West" basis="Claude's estimate" ids={["west-estimate", "madagascar"]} statements={statements} />
       <span className={op} aria-hidden="true">=</span>
       <ChainTerm value={pct(spread * WEST_GIVEN_SPREAD)} label="It reaches the West" ids={[]} statements={statements} />
-      <p className="col-span-full mt-3 text-sm opacity-70">
-        Cross-check:{" "}
-        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="underline">FutureSearch ↗</a>, asked directly, says {pct(FUTURESEARCH_WEST)}.
-      </p>
     </div>
   );
 }
 
 /** Central chart: each input to the spread step and the middle line the headline is built from. */
 function SpreadChart({ parts }: { parts: Input[] }) {
-  const rows = mergeMarketHistory(parts);
+  const drawn = parts.filter((x) => x.history.length > 0);
+  const fixed = parts.filter((x) => x.history.length === 0).map((x) => x.probability);
+  const rows = mergeMarketHistory(drawn);
   const middle = rows.flatMap((row) => {
-    const values = parts.map((_, i) => row[`series_${i}`]).filter((v): v is number => v !== null && v !== undefined);
-    return values.length === parts.length ? [{ timestamp: Number(row.timestamp), probability: median(values) }] : [];
+    const values = drawn.map((_, i) => row[`series_${i}`]).filter((v): v is number => v !== null && v !== undefined);
+    return values.length === drawn.length ? [{ timestamp: Number(row.timestamp), probability: median([...values, ...fixed]) }] : [];
   });
   // Middle last so it draws on top: it often coincides with one input.
   const series: ChartSeries[] = [
-    ...parts.map((x) => ({ label: x.label, color: x.color, source: x.source, probability: x.probability, history: x.history, sourceUrl: x.url, lastUpdated: x.lastUpdated })),
+    ...parts.filter((x) => x.history.length > 0).map((x) => ({ label: x.label, color: x.color, source: x.source, probability: x.probability, history: x.history, sourceUrl: x.url, lastUpdated: x.lastUpdated })),
     { label: "Middle", color: MIDDLE_COLOR, source: "", probability: Math.round(median(parts.map((x) => x.probability))), history: middle },
   ];
   return (
     <div className="not-prose mx-auto mb-14 max-w-3xl">
-      <p className="mb-2 text-center text-xs opacity-60">It spreads beyond the lab worker: each input and their middle</p>
       <CombinedChart series={series} />
     </div>
+  );
+}
+
+function FutureSearchCard() {
+  const big = (value: string, label: string) => (
+    <div>
+      <div className="text-4xl tabular-nums" style={SERIF}>{value}</div>
+      <div className="mt-1 text-sm opacity-70">{label}</div>
+    </div>
+  );
+  return (
+    <VotedCard slot="plague:futuresearch">
+      <div className="card-body">
+        <h3 className="card-title text-lg mb-1">FutureSearch AI forecast</h3>
+        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="text-xs underline opacity-65 hover:opacity-100">5 October · reasoning ↗</a>
+        <div className="my-6 grid grid-cols-2 gap-4">
+          {big(pct(FUTURESEARCH_SPREAD / 100), "It spreads beyond the lab worker")}
+          {big(pct(FUTURESEARCH_WEST), "It reaches the West")}
+        </div>
+        <ChartVote slot="plague:futuresearch" mode="expanded" />
+      </div>
+    </VotedCard>
   );
 }
 
@@ -372,16 +393,12 @@ function PlaguePage() {
     const history = [...m.history, { timestamp: last, probability: m.probability }];
     return [{ source: c.source, label: c.label, probability: m.probability, url: m.sourceUrl, color: m.chartColor ?? "#94A3B8", history, lastUpdated: m.lastUpdated }];
   });
-  // One forecast, drawn flat across the chart so the middle line is comparable throughout.
-  const times = marketInputs.flatMap((x) => x.history.map((h) => h.timestamp));
-  // A point at every market timestamp: the chart drops a series 2 days past its last point.
-  const flat = [...new Set([...times, FUTURESEARCH_TIME])].sort((a, b) => a - b);
   const spread: Input[] = [
     ...marketInputs,
     {
-      source: "FutureSearch", label: "FutureSearch, 5 Oct", probability: FUTURESEARCH_SPREAD, url: FUTURESEARCH_URL, color: "#7C3AED",
-      history: flat.map((timestamp) => ({ timestamp, probability: FUTURESEARCH_SPREAD })),
-      lastUpdated: FUTURESEARCH_TIME,
+      // One forecast so far: it counts toward the middle and shows on its card, not as a line.
+      source: "FutureSearch", label: "FutureSearch", probability: FUTURESEARCH_SPREAD, url: FUTURESEARCH_URL, color: "#7C3AED",
+      history: [], lastUpdated: FUTURESEARCH_TIME,
     },
   ];
   const p = spread.length > 1 ? median(spread.map((x) => x.probability)) / 100 : undefined;
@@ -404,6 +421,7 @@ function PlaguePage() {
       </>}
       voteMode="expanded"
       intro={<><Summary statements={statements} /><SectionLabel>The markets</SectionLabel></>}
+      extraCards={<FutureSearchCard />}
       footer={<Sources statements={statements} />}
     />
   );
