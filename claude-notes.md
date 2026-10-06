@@ -28,6 +28,11 @@
   0.5-5%; basis: Madagascar 2017, 2,348 cases, 1,791 pneumonic, WHO "no reported cases related to international
   travel"; likeliest next cases are contacts under observation). Shown as a three-term equation with
   citations, then a central chart of the two markets plus their computed middle (mergeMarketHistory).
+- FutureSearch run 5 Oct (high effort, `tmp/plague/fs.py`, output in `docs/plague-futuresearch-2026-10-05.md`):
+  spread 3%, West directly 1%. Spread step = middle of Polymarket, Kalshi 2+, FutureSearch (flat line on the
+  chart); FutureSearch's direct 1% shown as a cross-check. Forecasters link directly; Sources holds only facts
+  and Claude's 2% (Nathan: market quotes don't belong in Sources). Word ladder gained 1% "Almost certainly not"
+  (ICD 203 puts "very unlikely" at 5-20%). Headline 5 Oct night: 16% x 2% = 0.3%.
 - Earlier title "Will the Russian plague spread?": X counts 5 Oct, "Russian plague" 2,568 posts/week vs "Irkutsk plague" 205.
 - Metaculus has no plague question; nearest is 40259 (WHO announces a non-H5N1 pandemic before 2027), not added.
 - Commits: feat: /plague page on the Irkutsk lab death with birdflurisk-style headline word · feat: centre the

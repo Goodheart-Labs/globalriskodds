@@ -1,5 +1,7 @@
-// Word ladder carried over from birdflurisk.com (big-risk-odds src/lib/probabilities.ts).
+// Word ladder carried over from birdflurisk.com (big-risk-odds src/lib/probabilities.ts),
+// plus a 1% rung: ICD 203 reserves "very unlikely" for 5-20%.
 const NAMED_PROBABILITIES: Record<number, string> = {
+  1: "Almost certainly not",
   3: "Very unlikely",
   8: "Little chance",
   20: "Unlikely",

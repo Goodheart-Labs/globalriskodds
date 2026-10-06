@@ -109,13 +109,20 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
 // Each resolves Yes only if someone other than the lab worker is confirmed
 // with plague. The 5+ rung is left out: it asks for a bigger outbreak.
 const SPREAD_COMPONENTS = [
-  { id: "pm-new-case", group: "plague_new_case_russia", label: "by 31 Oct · Polymarket", source: "Polymarket", text: "a new pneumonic plague case is confirmed in Russia by 31 October" },
-  { id: "kalshi-2plus", group: "plague_irkutsk_cases", label: "2+ cases · Kalshi", source: "Kalshi", text: "2 or more plague cases are confirmed in Irkutsk Oblast before 1 November" },
+  { group: "plague_new_case_russia", label: "by 31 Oct · Polymarket", source: "Polymarket" },
+  { group: "plague_irkutsk_cases", label: "2+ cases · Kalshi", source: "Kalshi" },
 ];
 
 // Claude's judgment, not a market: if plague spreads beyond the lab worker, the chance a
 // linked case is confirmed in Europe or North America by 1 November.
 const WEST_GIVEN_SPREAD = 0.02;
+
+// FutureSearch, one run on 5 Oct (docs/plague-futuresearch-2026-10-05.md): a third
+// reading of the spread step, and the headline asked directly as a cross-check.
+const FUTURESEARCH_URL = "https://github.com/Goodheart-Labs/globalriskodds/blob/main/docs/plague-futuresearch-2026-10-05.md";
+const FUTURESEARCH_TIME = Date.UTC(2026, 9, 6, 5, 25);
+const FUTURESEARCH_SPREAD = 3;
+const FUTURESEARCH_WEST = 0.01;
 const MIDDLE_COLOR = "#B45309";
 
 const CBS_URL = "https://www.cbsnews.com/news/russia-plague-lab-death-pneumonia-of-unknown-origin/";
@@ -238,7 +245,7 @@ function Hero({ spread }: { spread: number | undefined }) {
   );
 }
 
-function ChainTerm({ value, label, basis, ids, statements }: { value: string; label: string; basis?: string; ids: string[]; statements: Statement[] }) {
+function ChainTerm({ value, label, basis, ids, statements }: { value: string; label: string; basis?: ReactNode; ids: string[]; statements: Statement[] }) {
   return (
     <div className="min-w-0">
       <div className="text-3xl sm:text-4xl tabular-nums" style={SERIF}>{value}</div>
@@ -249,41 +256,46 @@ function ChainTerm({ value, label, basis, ids, statements }: { value: string; la
 }
 
 /** The headline's working: market odds of any spread, times Claude's factor for reaching the West. */
-function Chain({ spread, statements }: { spread: number; statements: Statement[] }) {
+type Input = { source: string; label: string; probability: number; url?: string; color: string; history: { timestamp: number; probability: number }[]; lastUpdated?: number };
+
+function Chain({ spread, parts, statements }: { spread: number; parts: Input[]; statements: Statement[] }) {
   const op = "self-start pt-1 text-2xl opacity-40";
   return (
     <div className="not-prose mx-auto mb-6 grid max-w-3xl grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-2 text-center sm:gap-4">
-      <ChainTerm value={pct(spread)} label="It spreads beyond the lab worker" basis="middle of two markets" ids={SPREAD_COMPONENTS.map((c) => c.id)} statements={statements} />
+      <ChainTerm value={pct(spread)} label="It spreads beyond the lab worker" ids={[]} statements={statements}
+        basis={<>middle of {parts.map((x, i) => (
+          <span key={x.source}>
+            {i > 0 && (i === parts.length - 1 ? " and " : ", ")}
+            <a href={x.url} target="_blank" rel="noopener noreferrer" className="underline">{x.source} ↗</a>
+          </span>
+        ))}</>} />
       <span className={op} aria-hidden="true">×</span>
       <ChainTerm value={pct(WEST_GIVEN_SPREAD)} label="If so, it reaches the West" basis="Claude's estimate" ids={["west-estimate", "madagascar"]} statements={statements} />
       <span className={op} aria-hidden="true">=</span>
       <ChainTerm value={pct(spread * WEST_GIVEN_SPREAD)} label="It reaches the West" ids={[]} statements={statements} />
+      <p className="col-span-full mt-3 text-sm opacity-70">
+        Cross-check:{" "}
+        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="underline">FutureSearch ↗</a>, asked directly, says {pct(FUTURESEARCH_WEST)}.
+      </p>
     </div>
   );
 }
 
-/** Central chart: the two spread markets and the middle line the headline is built from. */
-function SpreadChart({ parts }: { parts: { label: string; market: Market }[] }) {
-  const rows = mergeMarketHistory(parts.map((x) => x.market));
+/** Central chart: each input to the spread step and the middle line the headline is built from. */
+function SpreadChart({ parts }: { parts: Input[] }) {
+  const rows = mergeMarketHistory(parts);
   const middle = rows.flatMap((row) => {
     const values = parts.map((_, i) => row[`series_${i}`]).filter((v): v is number => v !== null && v !== undefined);
     return values.length === parts.length ? [{ timestamp: Number(row.timestamp), probability: median(values) }] : [];
   });
+  // Middle last so it draws on top: it often coincides with one input.
   const series: ChartSeries[] = [
-    { label: "Middle", color: MIDDLE_COLOR, source: "", probability: Math.round(median(parts.map((x) => x.market.probability))), history: middle },
-    ...parts.map((x) => ({
-      label: x.label,
-      color: x.market.chartColor ?? "#94A3B8",
-      source: x.market.source,
-      probability: x.market.probability,
-      history: x.market.history,
-      sourceUrl: x.market.sourceUrl,
-      lastUpdated: x.market.lastUpdated,
-    })),
+    ...parts.map((x) => ({ label: x.label, color: x.color, source: x.source, probability: x.probability, history: x.history, sourceUrl: x.url, lastUpdated: x.lastUpdated })),
+    { label: "Middle", color: MIDDLE_COLOR, source: "", probability: Math.round(median(parts.map((x) => x.probability))), history: middle },
   ];
   return (
     <div className="not-prose mx-auto mb-14 max-w-3xl">
-      <p className="mb-2 text-center text-xs opacity-60">It spreads beyond the lab worker: the two markets and their middle</p>
+      <p className="mb-2 text-center text-xs opacity-60">It spreads beyond the lab worker: each input and their middle</p>
       <CombinedChart series={series} />
     </div>
   );
@@ -352,18 +364,28 @@ function PlaguePage() {
   const { data } = useSuspenseQuery(simpleMarketsQuery);
   const markets = data as Market[];
 
-  const spread = SPREAD_COMPONENTS.flatMap((c) => {
-    const market = markets.find((m) => m.chartGroup === c.group && m.shortLabel === c.label);
-    return market ? [{ ...c, market }] : [];
+  const marketInputs: Input[] = SPREAD_COMPONENTS.flatMap((c) => {
+    const m = markets.find((x) => x.chartGroup === c.group && x.shortLabel === c.label);
+    if (!m) return [];
+    // Carry each line to its current price so every input reaches the right edge.
+    const last = Math.max(m.lastUpdated, ...m.history.map((h) => h.timestamp));
+    const history = [...m.history, { timestamp: last, probability: m.probability }];
+    return [{ source: c.source, label: c.label, probability: m.probability, url: m.sourceUrl, color: m.chartColor ?? "#94A3B8", history, lastUpdated: m.lastUpdated }];
   });
-  const p = spread.length ? median(spread.map((x) => x.market.probability)) / 100 : undefined;
+  // One forecast, drawn flat across the chart so the middle line is comparable throughout.
+  const times = marketInputs.flatMap((x) => x.history.map((h) => h.timestamp));
+  // A point at every market timestamp: the chart drops a series 2 days past its last point.
+  const flat = [...new Set([...times, FUTURESEARCH_TIME])].sort((a, b) => a - b);
+  const spread: Input[] = [
+    ...marketInputs,
+    {
+      source: "FutureSearch", label: "FutureSearch, 5 Oct", probability: FUTURESEARCH_SPREAD, url: FUTURESEARCH_URL, color: "#7C3AED",
+      history: flat.map((timestamp) => ({ timestamp, probability: FUTURESEARCH_SPREAD })),
+      lastUpdated: FUTURESEARCH_TIME,
+    },
+  ];
+  const p = spread.length > 1 ? median(spread.map((x) => x.probability)) / 100 : undefined;
   const statements: Statement[] = [
-    ...spread.map((x) => ({
-      id: x.id,
-      text: `${x.market.probability}% that ${x.text}.`,
-      source: x.source,
-      url: x.market.sourceUrl ?? "#",
-    })),
     ...CHAIN,
     ...FACTS,
   ];
@@ -378,7 +400,7 @@ function PlaguePage() {
       groupKeys={PLAGUE_GROUPS}
       header={<>
         <Hero spread={p} />
-        {p !== undefined && <><Chain spread={p} statements={statements} /><SpreadChart parts={spread} /></>}
+        {p !== undefined && <><Chain spread={p} parts={spread} statements={statements} /><SpreadChart parts={spread} /></>}
       </>}
       voteMode="expanded"
       intro={<><Summary statements={statements} /><SectionLabel>The markets</SectionLabel></>}
