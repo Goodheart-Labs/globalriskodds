@@ -29,6 +29,7 @@ export const Route = createRootRouteWithContext<{
 
 const TABS = [
   { to: "/", label: "Iran" },
+  { to: "/plague", label: "Plague" },
   { to: "/ipo", label: "AI IPOs" },
   { to: "/agi", label: "AGI" },
   { to: "/wishlist", label: "Requests" },
