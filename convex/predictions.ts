@@ -471,6 +471,47 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     chartColor: SOURCE_COLORS.metaculus, sortOrder: 24,
     shortLabel: "Metaculus",
   },
+
+  // ============================================================
+  // CLIMATE DEATHS DASHBOARD (rendered at /climate)
+  // No market asks the headline (100M climate deaths by 2100), so these are
+  // the nearest Metaculus questions: mass-death events and the warming tail.
+  {
+    source: "metaculus", metaculusId: 30583,
+    category: "climate", chartGroup: "climate_heatwave_1m",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 40,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 44640,
+    category: "climate", chartGroup: "climate_disaster_10m",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 41,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 1493,
+    category: "climate", chartGroup: "global_catastrophe_2100",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 42,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 1500,
+    category: "climate", chartGroup: "catastrophe_climate_cause",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 43,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 1539,
+    category: "climate", chartGroup: "warming_3_6c",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 44,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 9570,
+    category: "climate", chartGroup: "warming_2c_2037",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 45,
+    shortLabel: "Metaculus",
+  },
 ];
 
 // Update market probability by source URL - USED BY UPDATER
@@ -979,13 +1020,18 @@ export const storeMetaculusHistory = mutation({
 
 // Fetch historical data for ALL active markets (Polymarket + Kalshi + Metaculus)
 export const fetchAllMarketHistory = action({
-  args: {},
-  handler: async (ctx): Promise<{ results: any[]; total: number }> => {
+  // `only`: restrict to these chartGroups. Metaculus rate-limits a full run, so a
+  // newly seeded page can miss its history if it comes last.
+  args: { only: v.optional(v.array(v.string())) },
+  handler: async (ctx, args): Promise<{ results: any[]; total: number }> => {
     "use node";
 
     console.log("[HISTORY] Fetching historical data for all active markets...");
 
-    const predictions = await ctx.runQuery(api.predictions.getActive);
+    const active = await ctx.runQuery(api.predictions.getActive);
+    const predictions = args.only
+      ? active.filter((p: any) => args.only!.includes(p.chartGroup))
+      : active;
     const results: any[] = [];
 
     // --- Polymarket history ---

@@ -182,7 +182,7 @@ function AdminDashboard() {
     setIsFetchingHistory(true);
     setHistoryResult(null);
     try {
-      const result = await fetchAllHistory();
+      const result = await fetchAllHistory({});
       console.log("History fetch result:", result);
       setHistoryResult(result);
     } catch (error) {

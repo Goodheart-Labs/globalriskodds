@@ -1,22 +1,21 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { type ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
 import {
   TopicDashboard,
   type GroupResolution,
   type Market,
 } from "@/components/TopicDashboard";
-import { ItemVote } from "@/components/ItemVote";
 import { ChartVote } from "@/components/ChartVote";
 import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { VotedCard } from "@/components/VotedCard";
 import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { mergeMarketHistory } from "@/lib/marketPresentation";
 import { median, probabilityColor, probabilityWord } from "@/lib/probabilityWords";
-import { chartScore } from "@/lib/helpfulness";
+import { Cite, SectionLabel, Sources, type Statement } from "@/components/Citations";
+import { SERIF } from "@/lib/serif";
 
 const GROUP_TITLES: Record<string, string> = {
   plague_new_case_russia: "New pneumonic plague case in Russia",
@@ -135,8 +134,6 @@ const NORTHEASTERN_URL = "https://news.northeastern.edu/2026/10/05/outbreak-plag
 const WHO_FACTSHEET_URL = "https://www.who.int/news-room/fact-sheets/detail/plague";
 const WHO_MADAGASCAR_URL = "https://www.who.int/emergencies/disease-outbreak-news/item/27-november-2017-plague-madagascar-en";
 
-type Statement = { id: string; text: string; source: string; url?: string };
-
 const CHAIN: Statement[] = [
   { id: "west-estimate", text: `Claude's estimate: if plague spreads beyond the lab worker, about a ${WEST_GIVEN_SPREAD * 100}% chance (range 0.5–5%) that a linked case is confirmed in Europe or North America by 1 November. The likeliest next cases are her contacts, already under observation, and a far larger outbreak in Madagascar produced no travel-related cases.`, source: "Claude Opus 5.5, 5 Oct 2026" },
   { id: "madagascar", text: "From 1 August to 22 November 2017, Madagascar reported 2,348 plague cases, 1,791 of them pneumonic. The WHO said: \"To date, there are no reported cases related to international travel.\"", source: "WHO", url: WHO_MADAGASCAR_URL },
@@ -154,79 +151,6 @@ const FACTS: Statement[] = [
   { id: "scarpino", text: "Samuel Scarpino, Northeastern University: \"The incubation time for plague is also very short, typically just a day or two, so we'd already be seeing cases.\"", source: "Northeastern", url: NORTHEASTERN_URL },
   { id: "antibiotics", text: "Common antibiotics \"can effectively cure the disease if they are delivered early\".", source: "WHO", url: WHO_FACTSHEET_URL },
 ];
-
-const slotOf = (id: string) => `plague:source:${id}`;
-const SERIF = { fontFamily: 'Georgia, "Times New Roman", serif' };
-
-type Vote = { slot: string; rating: string; voterKey: string };
-
-function CiteCard({ id, n, st, votes, alignRight }: { id: string; n: number; st: Statement; votes: Vote[]; alignRight: boolean }) {
-  return (
-    <span id={id} role="dialog" aria-label={`Source ${n}`}
-      className={`absolute top-full z-40 mt-1 block w-[min(24rem,88vw)] rounded-md border border-base-300 bg-base-100 p-3 text-left font-sans text-sm font-normal leading-snug tracking-normal text-base-content shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:w-auto ${alignRight ? "right-0" : "left-0"}`}>
-      <span className="block text-[10px] font-semibold opacity-50">{n}</span>
-      <span className="mt-1 block">{st.text}</span>
-      {st.url
-        ? <a href={st.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-block text-xs underline opacity-70 hover:opacity-100">{st.source} ↗</a>
-        : <span className="mt-1.5 block text-xs opacity-70">{st.source}</span>}
-      <span className="mt-2 block"><ItemVote slot={slotOf(st.id)} votes={votes} expanded /></span>
-    </span>
-  );
-}
-
-/** Boxed citation number. Hover (or tap) opens the source with its vote buttons; a click pins it. */
-function CiteChip({ n, st }: { n: number; st: Statement }) {
-  const votes = useQuery(api.chartVotes.listAll) ?? [];
-  const [hovered, setHovered] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [alignRight, setAlignRight] = useState(false);
-  const wrap = useRef<HTMLSpanElement>(null);
-  const timer = useRef<number | undefined>(undefined);
-  const id = useId();
-  const open = hovered || pinned;
-  useEffect(() => {
-    if (!open) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!wrap.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
-    };
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, [open]);
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-  const place = () => {
-    const box = wrap.current?.getBoundingClientRect();
-    setAlignRight(!!box && box.left > window.innerWidth / 2);
-  };
-  // Short delays so a pointer crossing the gap into the card does not lose it.
-  const hover = (next: boolean) => {
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => { if (next) place(); setHovered(next); }, next ? 120 : 250);
-  };
-  return (
-    <span ref={wrap} className="relative inline-block"
-      onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) hover(true); }}
-      onMouseLeave={() => hover(false)}
-      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
-      <button type="button" aria-expanded={open} aria-controls={id} aria-label={`Source ${n}`}
-        onClick={() => { place(); setPinned(!open); setHovered(false); window.clearTimeout(timer.current); }}
-        className={`ml-0.5 -translate-y-1 cursor-pointer rounded-sm border px-1 font-sans text-[10px] leading-4 hover:opacity-100 ${open ? "border-base-content/60 opacity-100" : "border-base-300 opacity-75"}`}>
-        {n}
-      </button>
-      {open && <CiteCard id={id} n={n} st={st} votes={votes} alignRight={alignRight} />}
-    </span>
-  );
-}
-
-function Cite({ ids, statements }: { ids: string[]; statements: Statement[] }) {
-  return (
-    <>
-      {ids.map((id) => {
-        const i = statements.findIndex((s) => s.id === id);
-        return i < 0 ? null : <CiteChip key={id} n={i + 1} st={statements[i]} />;
-      })}
-    </>
-  );
-}
 
 const pct = (x: number) => `${x < 0.1 ? Number((x * 100).toFixed(1)) : Math.round(x * 100)}%`;
 
@@ -253,7 +177,7 @@ function ChainTerm({ value, label, basis, ids, statements }: { value: string; la
   return (
     <div className="min-w-0">
       <div className="text-3xl sm:text-4xl tabular-nums" style={SERIF}>{value}</div>
-      <div className="mt-1 text-sm leading-snug">{label}<Cite ids={ids} statements={statements} /></div>
+      <div className="mt-1 text-sm leading-snug">{label}<Cite ids={ids} statements={statements} topic="plague" /></div>
       {basis && <div className="mt-0.5 text-xs opacity-60">{basis}</div>}
     </div>
   );
@@ -325,7 +249,7 @@ function FutureSearchCard() {
 }
 
 function Summary({ statements }: { statements: Statement[] }) {
-  const c = (...ids: string[]) => <Cite ids={ids} statements={statements} />;
+  const c = (...ids: string[]) => <Cite ids={ids} statements={statements} topic="plague" />;
   return (
     <div className="not-prose mx-auto mb-14 max-w-[680px] space-y-4 text-[17px] leading-relaxed" style={SERIF}>
       <p>
@@ -340,101 +264,6 @@ function Summary({ statements }: { statements: Statement[] }) {
         cases would show quickly.{c("scarpino")} Antibiotics cure it if given early.{c("antibiotics")}
       </p>
     </div>
-  );
-}
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return <h2 className="not-prose risk-kicker mt-0 border-t border-base-content/80 pt-3">{children}</h2>;
-}
-
-function SourceRow({ n, text, url, source, slot, votes, reader }: {
-  n: number; text: string; url?: string; source: string; slot: string; votes: Vote[]; reader?: boolean;
-}) {
-  return (
-    <li id={`s-${n}`} className="flex scroll-mt-24 gap-3 border-b border-base-300 py-3 transition-colors target:bg-warning/15">
-      <span className="w-5 shrink-0 text-right text-xs opacity-50 tabular-nums">{n}</span>
-      <div className="min-w-0 flex-1 space-y-2">
-        <p className="leading-snug">
-          {text}{" "}
-          {url
-            ? <a href={url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-xs underline opacity-60 hover:opacity-100">{source} ↗</a>
-            : <span className="whitespace-nowrap text-xs opacity-60">{source}</span>}
-          {reader && <span className="ml-1 whitespace-nowrap text-xs opacity-50">· added by a reader</span>}
-        </p>
-        <ItemVote slot={slot} votes={votes} expanded />
-      </div>
-    </li>
-  );
-}
-
-/** A link's host, for the source label. Never throws: bad links just lose the label. */
-function hostOf(url: string | undefined): string {
-  if (!url) return "no source given";
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return "source";
-  }
-}
-
-function AddSource() {
-  const addCaveat = useMutation(api.caveats.addCaveat);
-  const [text, setText] = useState("");
-  const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-
-  const submit = async () => {
-    if (!text.trim()) return;
-    setError(null);
-    try {
-      await addCaveat({ topic: "plague", content: text, url: url || undefined });
-      setText(""); setUrl(""); setDone(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "That did not save.");
-    }
-  };
-
-  return (
-    <div className="mt-5">
-      <label className="mb-2 block text-sm font-medium" htmlFor="add-source">Add a source</label>
-      <textarea id="add-source" rows={2} value={text} maxLength={600}
-        onChange={(e) => { setText(e.target.value); setDone(false); }}
-        placeholder="A fact that belongs on this page"
-        className="textarea w-full text-sm" />
-      <div className="mt-2 flex flex-wrap gap-2">
-        <input type="url" value={url} onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://link-to-the-source" className="input input-sm min-w-0 flex-1 text-sm" />
-        <button type="button" className="btn btn-sm btn-neutral" disabled={!text.trim()} onClick={() => void submit()}>Add</button>
-      </div>
-      {error && <p className="mt-2 text-sm text-error">{error}</p>}
-      {done && <p className="mt-2 text-sm text-success">Added — readers vote on what stays near the top.</p>}
-    </div>
-  );
-}
-
-function Sources({ statements }: { statements: Statement[] }) {
-  const votes = useQuery(api.chartVotes.listAll) ?? [];
-  const reader = useQuery(api.caveats.listForTopic, { topic: "plague" }) ?? [];
-  const readerSorted = [...reader].sort(
-    (a, b) => chartScore(votes.filter((v) => v.slot === `plague:reader:${b._id}`))
-      - chartScore(votes.filter((v) => v.slot === `plague:reader:${a._id}`)),
-  );
-  return (
-    <section className="not-prose mx-auto mt-16 max-w-[680px]">
-      <SectionLabel>Sources</SectionLabel>
-      <ol>
-        {statements.map((st, i) => (
-          <SourceRow key={st.id} n={i + 1} text={st.text} url={st.url} source={st.source} slot={slotOf(st.id)} votes={votes} />
-        ))}
-        {readerSorted.map((c, i) => (
-          <SourceRow key={c._id} n={statements.length + i + 1} text={c.content} url={c.url}
-            source={hostOf(c.url)}
-            slot={`plague:reader:${c._id}`} votes={votes} reader />
-        ))}
-      </ol>
-      <AddSource />
-    </section>
   );
 }
 
@@ -490,7 +319,7 @@ function PlaguePage() {
       intro={<><Summary statements={statements} /><SectionLabel>The markets</SectionLabel></>}
       extraCards={<FutureSearchCard />}
       footer={<>
-        <Sources statements={statements} />
+        <Sources statements={statements} topic="plague" />
         <div className="mx-auto mt-10 max-w-[680px]"><SuggestionsPanel topic="plague" placeholder="e.g. Will Russia name the pathogen before 2027?" /></div>
       </>}
     />

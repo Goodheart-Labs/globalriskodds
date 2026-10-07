@@ -22,6 +22,7 @@ import { Route as H5n1Import } from './routes/h5n1'
 import { Route as ElninoImport } from './routes/elnino'
 import { Route as ElNinoImport } from './routes/el-nino'
 import { Route as DebugAuthImport } from './routes/debug-auth'
+import { Route as ClimateImport } from './routes/climate'
 import { Route as AiRiskImport } from './routes/ai-risk'
 import { Route as AgiImport } from './routes/agi'
 import { Route as AdminImport } from './routes/admin'
@@ -95,6 +96,12 @@ const DebugAuthRoute = DebugAuthImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ClimateRoute = ClimateImport.update({
+  id: '/climate',
+  path: '/climate',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AiRiskRoute = AiRiskImport.update({
   id: '/ai-risk',
   path: '/ai-risk',
@@ -149,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-risk'
       fullPath: '/ai-risk'
       preLoaderRoute: typeof AiRiskImport
+      parentRoute: typeof rootRoute
+    }
+    '/climate': {
+      id: '/climate'
+      path: '/climate'
+      fullPath: '/climate'
+      preLoaderRoute: typeof ClimateImport
       parentRoute: typeof rootRoute
     }
     '/debug-auth': {
@@ -238,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
+  '/climate': typeof ClimateRoute
   '/debug-auth': typeof DebugAuthRoute
   '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
@@ -256,6 +271,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
+  '/climate': typeof ClimateRoute
   '/debug-auth': typeof DebugAuthRoute
   '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
@@ -275,6 +291,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
+  '/climate': typeof ClimateRoute
   '/debug-auth': typeof DebugAuthRoute
   '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
@@ -295,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agi'
     | '/ai-risk'
+    | '/climate'
     | '/debug-auth'
     | '/el-nino'
     | '/elnino'
@@ -312,6 +330,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agi'
     | '/ai-risk'
+    | '/climate'
     | '/debug-auth'
     | '/el-nino'
     | '/elnino'
@@ -329,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agi'
     | '/ai-risk'
+    | '/climate'
     | '/debug-auth'
     | '/el-nino'
     | '/elnino'
@@ -348,6 +368,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AgiRoute: typeof AgiRoute
   AiRiskRoute: typeof AiRiskRoute
+  ClimateRoute: typeof ClimateRoute
   DebugAuthRoute: typeof DebugAuthRoute
   ElNinoRoute: typeof ElNinoRoute
   ElninoRoute: typeof ElninoRoute
@@ -366,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AgiRoute: AgiRoute,
   AiRiskRoute: AiRiskRoute,
+  ClimateRoute: ClimateRoute,
   DebugAuthRoute: DebugAuthRoute,
   ElNinoRoute: ElNinoRoute,
   ElninoRoute: ElninoRoute,
@@ -393,6 +415,7 @@ export const routeTree = rootRoute
         "/admin",
         "/agi",
         "/ai-risk",
+        "/climate",
         "/debug-auth",
         "/el-nino",
         "/elnino",
@@ -417,6 +440,9 @@ export const routeTree = rootRoute
     },
     "/ai-risk": {
       "filePath": "ai-risk.tsx"
+    },
+    "/climate": {
+      "filePath": "climate.tsx"
     },
     "/debug-auth": {
       "filePath": "debug-auth.tsx"

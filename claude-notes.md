@@ -292,3 +292,21 @@ ai-risk-* bundles. See docs/ai-risk-access.md and docs/ai-risk-survey.md.
 Production: Vercel goodheart/israel-iran-dashboard; Convex striped-gopher-860.
 Use pnpm --ignore-workspace and Chrome for Testing, never real Google Chrome.
 Local gate 4177 forwards built preview on 4176.
+
+## /climate page (2026-10-07)
+
+- Nathan: "make a global risk odds page on climate change … use futuresearch. Notably what is the chance of over
+  100 million dead, given the current policy trajectory." URL-only `/climate` (no nav tab yet; ask).
+- Definition chosen (not confirmed by Nathan): net excess deaths 2026–2100 (heat minus cold deaths avoided, all
+  pathways) vs a world without human-caused warming, on current policies (CAT 2.6°C / UNEP 2.8°C).
+- Headline = middle of FutureSearch (thresholded, high effort: 32% >100M) and Claude's model
+  (`scripts/climate_deaths_model.py`, 42%) = 37%, "Maybe". Ladder of rungs 10M/30M/100M/300M/1B, plus a
+  Metaculus cross-check on the 1B rung = live 1493 x 1500 (a tenth of humanity dies within 5 years, climate cause).
+- Both put the median near 55–60M; the model's tails are wider because it takes Carleton 2022's RCP4.5 range
+  (−36 to 62 per 100k) at face value, which implies a 36% chance of net lives saved. Claude thinks ~15%.
+- Docs: `docs/climate-deaths-model.md`, `docs/climate-futuresearch-2026-10-07.md` (verbatim). Market groups:
+  climate_heatwave_1m (30583), climate_disaster_10m (44640), global_catastrophe_2100 (1493),
+  catastrophe_climate_cause (1500), warming_3_6c (1539), warming_2c_2037 (9570). Dev seeded + history.
+- Shared `src/components/Citations.tsx` (Cite, Sources, SectionLabel) extracted from /plague; slot ids unchanged.
+  `fetchAllMarketHistory` gained `only` (Metaculus 429s a full run before reaching newly seeded questions).
+- Prod: after push, `seedInitialMarkets` and `fetchAllMarketHistory` with `--prod` and the six groups above.
