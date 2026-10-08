@@ -512,6 +512,55 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     chartColor: SOURCE_COLORS.metaculus, sortOrder: 45,
     shortLabel: "Metaculus",
   },
+
+  // ============================================================
+  // NUCLEAR COMMAND HACK DASHBOARD (rendered at /nuclear-hack)
+  // No market asks the headline (an NC3 hack confirmed by 2030), so these are
+  // the nearest: who might get the bomb, cyberattacks on grids, nuclear use.
+  // Also shows the Iran page's `nuclear_weapon` group (Metaculus 5253).
+  // ============================================================
+  {
+    source: "polymarket", slug: "iran-nuke-before-2027",
+    category: "nuclear_program", chartGroup: "nc3_iran_nuke_2027",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 50,
+    shortLabel: "Polymarket",
+  },
+  {
+    source: "metaculus", metaculusId: 21898, metaculusSubQuestionId: 21899,
+    category: "nuclear_program", chartGroup: "nc3_new_states_2035",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 51,
+    shortLabel: "Iran · Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 21898, metaculusSubQuestionId: 21903,
+    category: "nuclear_program", chartGroup: "nc3_new_states_2035",
+    chartColor: "#16A34A", sortOrder: 51,
+    shortLabel: "Saudi Arabia · Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 21898, metaculusSubQuestionId: 21900,
+    category: "nuclear_program", chartGroup: "nc3_new_states_2035",
+    chartColor: "#DC2626", sortOrder: 51,
+    shortLabel: "South Korea · Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 21805,
+    category: "military_action", chartGroup: "nc3_taiwan_grid_cyber",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 52,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 39136,
+    category: "military_action", chartGroup: "nc3_us_ai_blackout",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 53,
+    shortLabel: "Metaculus",
+  },
+  {
+    source: "metaculus", metaculusId: 3150,
+    category: "nuclear_program", chartGroup: "nc3_no_detonation_2035",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 54,
+    shortLabel: "Metaculus",
+  },
 ];
 
 // Update market probability by source URL - USED BY UPDATER

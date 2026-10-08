@@ -1,5 +1,22 @@
 # Claude session notes
 
+## /nuclear-hack page (2026-10-08)
+
+- URL-only (no tab), per Nathan. Headline: NC3 intrusion confirmed by a nuclear-armed government, or reported by
+  a named major outlet citing officials, 8 Oct 2026 to end 2030. Admin networks (NNSA SolarWinds 2020, SharePoint
+  2025) and civil nuclear don't count.
+- Headline 14% = middle of FutureSearch high-effort 13% and Claude's model 14.3% (`scripts/nc3_hack_model.py`,
+  `docs/nc3-hack-model.md`; rates weighted by 20 empty years). FutureSearch output verbatim in
+  `docs/nc3-futuresearch-2026-10-08.md`; balance only covered 3 high-effort rows, so NHS/reactor/UK-site are low effort
+  ("quick run" tag on the page).
+- "Is cyber defence winning?" table answers Nathan's original question: ransomware falls 2027 vs 2025 11%,
+  NHS 1,000+ cancellations 37%, UK nuclear site 18%, reactor trip 9%.
+- Nearby markets seeded on dev: nc3_iran_nuke_2027 (Polymarket), nc3_new_states_2035 (Metaculus 21898 subs Iran,
+  Saudi, South Korea), nc3_taiwan_grid_cyber (21805), nc3_us_ai_blackout (39136), nc3_no_detonation_2035 (3150),
+  plus the Iran page's existing nuclear_weapon (5253). Seed prod after the deploy lands.
+- Skipped: Metaculus 15537 "new nuclear-armed state before 2030" sits at 55% from 62 forecasters, inconsistent
+  with the per-country questions.
+
 ## /plague update (2026-10-07)
 
 - Tedros (WHO DG) posted 6 Oct: Russia reported "medical observation of all identified contacts had been

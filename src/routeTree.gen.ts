@@ -15,6 +15,7 @@ import { Route as WishlistImport } from './routes/wishlist'
 import { Route as StatusImport } from './routes/status'
 import { Route as PlagueImport } from './routes/plague'
 import { Route as OriginalImport } from './routes/original'
+import { Route as NuclearHackImport } from './routes/nuclear-hack'
 import { Route as MaintenanceImport } from './routes/maintenance'
 import { Route as IpoImport } from './routes/ipo'
 import { Route as HantavirusImport } from './routes/hantavirus'
@@ -51,6 +52,12 @@ const PlagueRoute = PlagueImport.update({
 const OriginalRoute = OriginalImport.update({
   id: '/original',
   path: '/original',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const NuclearHackRoute = NuclearHackImport.update({
+  id: '/nuclear-hack',
+  path: '/nuclear-hack',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -214,6 +221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MaintenanceImport
       parentRoute: typeof rootRoute
     }
+    '/nuclear-hack': {
+      id: '/nuclear-hack'
+      path: '/nuclear-hack'
+      fullPath: '/nuclear-hack'
+      preLoaderRoute: typeof NuclearHackImport
+      parentRoute: typeof rootRoute
+    }
     '/original': {
       id: '/original'
       path: '/original'
@@ -260,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
+  '/nuclear-hack': typeof NuclearHackRoute
   '/original': typeof OriginalRoute
   '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
@@ -279,6 +294,7 @@ export interface FileRoutesByTo {
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
+  '/nuclear-hack': typeof NuclearHackRoute
   '/original': typeof OriginalRoute
   '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
@@ -299,6 +315,7 @@ export interface FileRoutesById {
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
+  '/nuclear-hack': typeof NuclearHackRoute
   '/original': typeof OriginalRoute
   '/plague': typeof PlagueRoute
   '/status': typeof StatusRoute
@@ -320,6 +337,7 @@ export interface FileRouteTypes {
     | '/hantavirus'
     | '/ipo'
     | '/maintenance'
+    | '/nuclear-hack'
     | '/original'
     | '/plague'
     | '/status'
@@ -338,6 +356,7 @@ export interface FileRouteTypes {
     | '/hantavirus'
     | '/ipo'
     | '/maintenance'
+    | '/nuclear-hack'
     | '/original'
     | '/plague'
     | '/status'
@@ -356,6 +375,7 @@ export interface FileRouteTypes {
     | '/hantavirus'
     | '/ipo'
     | '/maintenance'
+    | '/nuclear-hack'
     | '/original'
     | '/plague'
     | '/status'
@@ -376,6 +396,7 @@ export interface RootRouteChildren {
   HantavirusRoute: typeof HantavirusRoute
   IpoRoute: typeof IpoRoute
   MaintenanceRoute: typeof MaintenanceRoute
+  NuclearHackRoute: typeof NuclearHackRoute
   OriginalRoute: typeof OriginalRoute
   PlagueRoute: typeof PlagueRoute
   StatusRoute: typeof StatusRoute
@@ -395,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   HantavirusRoute: HantavirusRoute,
   IpoRoute: IpoRoute,
   MaintenanceRoute: MaintenanceRoute,
+  NuclearHackRoute: NuclearHackRoute,
   OriginalRoute: OriginalRoute,
   PlagueRoute: PlagueRoute,
   StatusRoute: StatusRoute,
@@ -423,6 +445,7 @@ export const routeTree = rootRoute
         "/hantavirus",
         "/ipo",
         "/maintenance",
+        "/nuclear-hack",
         "/original",
         "/plague",
         "/status",
@@ -464,6 +487,9 @@ export const routeTree = rootRoute
     },
     "/maintenance": {
       "filePath": "maintenance.tsx"
+    },
+    "/nuclear-hack": {
+      "filePath": "nuclear-hack.tsx"
     },
     "/original": {
       "filePath": "original.tsx"
