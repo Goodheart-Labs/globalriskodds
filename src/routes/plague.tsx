@@ -126,6 +126,9 @@ const FUTURESEARCH_URL = "https://github.com/Goodheart-Labs/globalriskodds/blob/
 const FUTURESEARCH_TIME = Date.UTC(2026, 9, 6, 5, 25);
 const FUTURESEARCH_SPREAD = 3;
 const FUTURESEARCH_WEST = 0.01;
+// Sentinel's forecasters (5 Oct) on a different, larger question: 1,000+ global plague deaths in 12 months.
+const SENTINEL_HEADLINE = 0.007;
+const SENTINEL_RANGE = "0.1–2.0%";
 const MIDDLE_COLOR = "#B45309";
 
 const CBS_URL = "https://www.cbsnews.com/news/russia-plague-lab-death-pneumonia-of-unknown-origin/";
@@ -133,18 +136,26 @@ const TIME_URL = "https://time.com/article/2026/10/05/russia-plague-fears-siberi
 const NORTHEASTERN_URL = "https://news.northeastern.edu/2026/10/05/outbreak-plague-russia-analysis/";
 const WHO_FACTSHEET_URL = "https://www.who.int/news-room/fact-sheets/detail/plague";
 const WHO_MADAGASCAR_URL = "https://www.who.int/emergencies/disease-outbreak-news/item/27-november-2017-plague-madagascar-en";
+const TEDROS_URL = "https://x.com/DrTedros/status/2107586377114099746";
+const UN_NEWS_URL = "https://news.un.org/en/story/2026/10/1168533";
+const SENTINEL_URL = "https://blog.sentinel-team.org/p/open-model-reaches-mythos-hacking";
 
 const CHAIN: Statement[] = [
-  { id: "west-estimate", text: `Claude's estimate: if plague spreads beyond the lab worker, about a ${WEST_GIVEN_SPREAD * 100}% chance (range 0.5–5%) that a linked case is confirmed in Europe or North America by 1 November. The likeliest next cases are her contacts, already under observation, and a far larger outbreak in Madagascar produced no travel-related cases.`, source: "Claude Opus 5.5, 5 Oct 2026" },
+  { id: "west-estimate", text: `Claude's estimate: if plague spreads beyond the lab worker, about a ${WEST_GIVEN_SPREAD * 100}% chance (range 0.5–5%) that a linked case is confirmed in Europe or North America by 1 November. Her traced contacts have now been cleared, so this covers the paths tracing would have missed, and a far larger outbreak in Madagascar produced no travel-related cases. Irkutsk is remote and the window is short.`, source: "Claude Opus 5.5, updated 7 Oct 2026" },
   { id: "madagascar", text: "From 1 August to 22 November 2017, Madagascar reported 2,348 plague cases, 1,791 of them pneumonic. The WHO said: \"To date, there are no reported cases related to international travel.\"", source: "WHO", url: WHO_MADAGASCAR_URL },
 ];
 
 const FACTS: Statement[] = [
+  { id: "observation-ended", text: "Russia told the WHO on 6 October that no high-threat pathogens had been detected among the contacts and that \"medical observation of all identified contacts had been completed\".", source: "WHO, Tedros", url: TEDROS_URL },
+  { id: "second-employee", text: "The WHO has asked Russia to clarify \"the cause of the severe pneumonia, the pathogen that prompted the public health measures, and media reports of a second employee with pneumonia of undetermined cause\". The second employee is a media report the WHO is asking about, not a confirmed case.", source: "WHO, Tedros", url: TEDROS_URL },
+  { id: "transparency", text: "Tedros Adhanom Ghebreyesus, WHO Director-General: \"Timely, complete and transparent information sharing under the International Health Regulations is essential to clarify conflicting reports and enable an accurate assessment of potential public health risks.\"", source: "WHO, Tedros", url: TEDROS_URL },
+  { id: "who-region", text: "The WHO's initial risk assessment, 6 October: \"moderate to low for Irkutsk, a low risk for the Russian Federation as a whole and very low for the WHO European region\".", source: "UN News", url: UN_NEWS_URL },
   { id: "died", text: "A lab worker at the Irkutsk Anti-Plague Research Institute died of severe pneumonia overnight into 2 October, the WHO said.", source: "CBS News", url: CBS_URL },
   { id: "test-tube", text: "Russian media reported that she broke a test tube containing plague bacteria in late September.", source: "CBS News", url: CBS_URL },
   { id: "no-accident", text: "Russian authorities said there had been no accident and attributed her death to \"pneumonia of unknown origin\".", source: "CBS News", url: CBS_URL },
   { id: "samples", text: "Rospotrebnadzor said no microorganisms related to her work were found in her biological samples.", source: "Time", url: TIME_URL },
   { id: "contacts", text: "Rospotrebnadzor tested nearly 200 of her contacts; some had colds or COVID, but no pathogens causing dangerous infections were found.", source: "CBS News", url: CBS_URL },
+  { id: "sentinel-fact", text: `Sentinel's forecasters, 5 October: ${SENTINEL_HEADLINE * 100}% (${SENTINEL_RANGE}) that global plague deaths exceed 1,000 in the next 12 months. They call it "a serious incident that merits monitoring but not alarm", and flag an antibiotic-resistant strain or an unrelated disease as the ways they could be wrong.`, source: "Sentinel", url: SENTINEL_URL },
   { id: "who-risk", text: "The WHO said that \"based on the unofficial information available, the public health risk to the general public appears to be low\".", source: "CBS News", url: CBS_URL },
   { id: "spreads", text: "\"Any person with pneumonic plague may transmit the disease via respiratory particles to other humans.\"", source: "WHO", url: WHO_FACTSHEET_URL },
   { id: "incubation", text: "\"Incubation can be as short as 24 hours.\"", source: "WHO", url: WHO_FACTSHEET_URL },
@@ -154,7 +165,7 @@ const FACTS: Statement[] = [
 
 const pct = (x: number) => `${x < 0.1 ? Number((x * 100).toFixed(1)) : Math.round(x * 100)}%`;
 
-function Hero({ spread }: { spread: number | undefined }) {
+function Hero({ spread, statements }: { spread: number | undefined; statements: Statement[] }) {
   const west = spread === undefined ? undefined : spread * WEST_GIVEN_SPREAD;
   return (
     <header className="not-prose mx-auto mb-10 max-w-3xl text-center">
@@ -166,6 +177,7 @@ function Hero({ spread }: { spread: number | undefined }) {
           </p>
           <p className="mx-auto mt-4 max-w-xl text-lg text-balance">
             About {pct(west)} that a case linked to Russia is confirmed in Europe or North America by 1 November.
+            <Cite ids={["who-region"]} statements={statements} topic="plague" />
           </p>
         </>
       )}
@@ -223,6 +235,26 @@ function SpreadChart({ parts }: { parts: Input[] }) {
     <div className="not-prose mx-auto mb-14 max-w-3xl">
       <CombinedChart series={series} />
     </div>
+  );
+}
+
+function SentinelCard({ statements }: { statements: Statement[] }) {
+  return (
+    <VotedCard slot="plague:sentinel">
+      <div className="card-body">
+        <h3 className="card-title text-lg mb-1">Sentinel forecasters</h3>
+        <a href={SENTINEL_URL} target="_blank" rel="noopener noreferrer" className="text-xs underline opacity-65 hover:opacity-100">5 October · reasoning ↗</a>
+        <div className="my-6">
+          <div className="text-4xl tabular-nums" style={SERIF}>{pct(SENTINEL_HEADLINE)}</div>
+          <div className="mt-1 text-sm opacity-70">
+            Global plague deaths pass 1,000 in 12 months
+            <Cite ids={["sentinel-fact"]} statements={statements} topic="plague" />
+          </div>
+          <div className="mt-0.5 text-xs opacity-60">range {SENTINEL_RANGE} · a wider question than the one above</div>
+        </div>
+        <ChartVote slot="plague:sentinel" mode="expanded" />
+      </div>
+    </VotedCard>
   );
 }
 
@@ -312,12 +344,12 @@ function PlaguePage() {
       groupResolutions={GROUP_RESOLUTION}
       groupKeys={PLAGUE_GROUPS}
       header={<>
-        <Hero spread={p} />
+        <Hero spread={p} statements={statements} />
         {p !== undefined && <><Chain spread={p} parts={spread} statements={statements} /><SpreadChart parts={spread} /></>}
       </>}
       voteMode="expanded"
       intro={<><Summary statements={statements} /><SectionLabel>The markets</SectionLabel></>}
-      extraCards={<FutureSearchCard />}
+      extraCards={<><FutureSearchCard /><SentinelCard statements={statements} /></>}
       footer={<>
         <Sources statements={statements} topic="plague" />
         <div className="mx-auto mt-10 max-w-[680px]"><SuggestionsPanel topic="plague" placeholder="e.g. Will Russia name the pathogen before 2027?" /></div>

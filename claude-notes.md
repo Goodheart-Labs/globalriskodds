@@ -1,5 +1,22 @@
 # Claude session notes
 
+## /plague update (2026-10-07)
+
+- Tedros (WHO DG) posted 6 Oct: Russia reported "medical observation of all identified contacts had been
+  completed", no high-threat pathogens; WHO has asked for the cause of the pneumonia, the pathogen that
+  prompted the measures, and "media reports of a second employee with pneumonia of undetermined cause".
+  Second employee = a media report WHO is chasing, NOT a confirmed case — say so on the page.
+- Updated the stale `west-estimate` (it said contacts were "already under observation"); 2% unchanged, now
+  justified as the paths tracing would have missed. Added facts: observation-ended, second-employee,
+  transparency (Tedros's IHR line), who-region (WHO 6 Oct: "very low for the WHO European region", cited from
+  the headline), sentinel-fact. Added a Sentinel card beside FutureSearch (0.7%, range 0.1-2.0%, a wider
+  question: 1,000+ global plague deaths in 12 months).
+- Market moves 5->7 Oct: Kalshi 2+ Irkutsk 40->19, 1+ 55->30, US pneumonic by 2027 32->21; pathogen-named
+  29->35 (up). Headline barely moved: the median is robust to Kalshi falling from the top toward the middle.
+- Verified with Playwright (all four strings render, no console errors). Not yet added: Esvelt's vaccination
+  point, an antibiotic-resistance caveat on the WHO "antibiotics cure it" line, the pathogen-agnostic
+  KXNEWOUTBREAK-P-26 card (8%) for the "it isn't plague at all" branch.
+
 ## /plague page (2026-10-05)
 
 - Nathan: "Make a global risk odds page on the plague thing. Have it be like the bird flu risk", then
