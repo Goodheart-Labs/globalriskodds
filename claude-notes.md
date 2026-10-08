@@ -310,3 +310,5 @@ Local gate 4177 forwards built preview on 4176.
 - Shared `src/components/Citations.tsx` (Cite, Sources, SectionLabel) extracted from /plague; slot ids unchanged.
   `fetchAllMarketHistory` gained `only` (Metaculus 429s a full run before reaching newly seeded questions).
 - Prod: after push, `seedInitialMarkets` and `fetchAllMarketHistory` with `--prod` and the six groups above.
+- Shipped to prod 7 Oct (f9b5a8d), prod seeded. Then (Nathan): "the suggest market option should be beside the
+  futuresearch one" — SuggestionsPanel now a card in the grid next to the FutureSearch card (climate only).

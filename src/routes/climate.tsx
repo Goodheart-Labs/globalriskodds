@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
 import {
   TopicDashboard,
@@ -328,6 +328,21 @@ function FutureSearchCard() {
   );
 }
 
+/** Sits beside the FutureSearch card in the grid. */
+function SuggestCard() {
+  return (
+    <div className="card min-w-0 bg-base-100">
+      <div className="card-body">
+        <h3 className="card-title text-lg mb-1">Suggest a market</h3>
+        <Link to="/wishlist" className="text-xs underline opacity-65 hover:opacity-100">See all requests</Link>
+        <div className="mt-4">
+          <SuggestionsPanel standalone topic={TOPIC} placeholder="e.g. Will a famine kill a million people before 2040?" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
 
 export const Route = createFileRoute("/climate")({
@@ -363,11 +378,8 @@ function ClimatePage() {
       header={<><Hero p={p} /><Ladder metaculusTail={metaculusTail} /></>}
       voteMode="expanded"
       intro={<><Summary /><Pathways /><SectionLabel>Nearby questions</SectionLabel></>}
-      extraCards={<FutureSearchCard />}
-      footer={<>
-        <Sources statements={STATEMENTS} topic={TOPIC} />
-        <div className="mx-auto mt-10 max-w-[680px]"><SuggestionsPanel topic={TOPIC} placeholder="e.g. Will a famine kill a million people before 2040?" /></div>
-      </>}
+      extraCards={<><FutureSearchCard /><SuggestCard /></>}
+      footer={<Sources statements={STATEMENTS} topic={TOPIC} />}
     />
   );
 }
