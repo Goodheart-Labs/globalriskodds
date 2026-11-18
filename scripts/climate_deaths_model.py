@@ -15,6 +15,7 @@ import math, random
 
 N = 200_000
 random.seed(7)
+TIMING = random.Random(8)  # own stream, so the totals match the 7 Oct run draw for draw
 Z90 = 1.2816  # z-score of the 90th percentile
 
 
@@ -50,19 +51,39 @@ def warming(year, w2100):
 YEARS = range(2026, 2101)
 
 
+DECADES = range(2030, 2100, 10)  # the 2030s to the 2090s
+
+
 def heat_cold(rate_2100, w2100):
     """Carleton et al. (2022): net temperature deaths per 100,000 in 2100 under RCP4.5, measured
-    against the 2001-2010 climate (~0.9C). Ramped in with warming above that, convex (power 1.5)."""
+    against the 2001-2010 climate (~0.9C). Ramped in with warming above that, convex (power 1.5).
+    Returns (total, {decade: deaths}), in millions."""
     base = 0.9
+    by_decade = dict.fromkeys(DECADES, 0.0)
     total = 0.0
     for y in YEARS:
         share = max(0.0, (warming(y, w2100) - base) / (w2100 - base)) ** 1.5
-        total += rate_2100 * share * pop(y) * 1e9 / 1e5
-    return total / 1e6  # millions
+        d = rate_2100 * share * pop(y) * 1e9 / 1e5 / 1e6
+        total += d
+        if 2030 <= y < 2100:
+            by_decade[y // 10 * 10] += d
+    return total, by_decade
+
+
+def decade_weights(w2100):
+    """Share of the other pathways' deaths falling in each decade: grows with warming above
+    today's 1.4C (power 1.5), the same scaling their totals use."""
+    raw = {y: max(0.0, warming(y, w2100) - 1.4) ** 1.5 for y in YEARS}
+    tot = sum(raw.values())
+    out = dict.fromkeys(DECADES, 0.0)
+    for y, v in raw.items():
+        if 2030 <= y < 2100:
+            out[y // 10 * 10] += v / tot
+    return out
 
 
 def run():
-    draws = []
+    draws, worst_decade = [], []
     parts = {k: [] for k in ["heat_cold", "food", "disease", "fire_flood_storm", "conflict", "cascade"]}
     for _ in range(N):
         # Warming by 2100: AR6 SSP2-4.5 best estimate 2.7C, very likely 2.1-3.5C (P5-P95).
@@ -70,7 +91,7 @@ def run():
         w = max(w, 1.8)
         # Carleton RCP4.5: median 4, P10 -36, P90 62 deaths per 100,000 in 2100. Already spans
         # climate-model spread, so it is not scaled by w again.
-        hc = heat_cold(two_piece(4, -36, 62), 2.7)
+        hc, hc_dec = heat_cold(two_piece(4, -36, 62), 2.7)
         # Other pathways (millions, cumulative), scaled by warming above today's 1.4C and a shared
         # vulnerability factor (how well poor countries develop and adapt), so they move together.
         scale = ((w - 1.4) / (2.7 - 1.4)) ** 1.5 * lognormal(1, 2)
@@ -80,12 +101,19 @@ def run():
         conflict = lognormal(1, 15) * scale    # Mach 2019: climate in 3-20% of conflict risk
         # Cascade: a systemic crisis (multi-breadbasket failure, collapse-driven famine and war)
         # that the pathway studies cannot see. Claude's judgment: 3%, median 100M if it happens.
+        # It strikes in one decade, more likely the hotter later ones.
         cascade = lognormal(100, 500) if random.random() < 0.03 else 0.0
         total = hc + food + disease + ffs + conflict + cascade
         draws.append(total)
+        wts = decade_weights(w)
+        rest = food + disease + ffs + conflict
+        dec = {d: hc_dec[d] + rest * wts[d] for d in DECADES}
+        if cascade:
+            dec[TIMING.choices(list(DECADES), weights=[wts[d] for d in DECADES])[0]] += cascade
+        worst_decade.append(max(dec.values()))
         for k, v in zip(parts, [hc, food, disease, ffs, conflict, cascade]):
             parts[k].append(v)
-    return draws, parts
+    return draws, parts, worst_decade
 
 
 def pct(xs, q):
@@ -94,10 +122,13 @@ def pct(xs, q):
 
 
 if __name__ == "__main__":
-    draws, parts = run()
+    draws, parts, worst = run()
     print(f"Total, millions: P10 {pct(draws, .1):.0f} · median {pct(draws, .5):.0f} · mean {sum(draws)/N:.0f} · P90 {pct(draws, .9):.0f}")
     for t in [10, 30, 100, 300, 1000]:
         print(f"  P(> {t:>4}M) = {sum(d > t for d in draws) / N:.1%}")
     print("By pathway, millions (P10 / median / P90):")
     for k, xs in parts.items():
         print(f"  {k:<17} {pct(xs, .1):6.1f} {pct(xs, .5):6.1f} {pct(xs, .9):7.1f}   mean {sum(xs)/N:6.1f}")
+    print(f"Deadliest single decade (2030s-2090s), millions: P10 {pct(worst, .1):.0f} · median {pct(worst, .5):.0f} · P90 {pct(worst, .9):.0f}")
+    for t in [10, 30, 100, 300, 1000]:
+        print(f"  P(> {t:>4}M in one decade) = {sum(d > t for d in worst) / N:.1%}")

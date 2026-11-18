@@ -72,25 +72,27 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
   },
 };
 
-// The ladder: chance that climate change kills more than each number of people, 2026–2100,
-// on current policies (net of cold deaths avoided).
-const RUNGS = [
-  { m: 10, label: "10 million" },
-  { m: 30, label: "30 million" },
-  { m: 100, label: "100 million" },
-  { m: 300, label: "300 million" },
-  { m: 1000, label: "1 billion" },
-] as const;
-const HEADLINE_RUNG = 100;
+// The page asks two questions, both on current policies and net of cold deaths avoided:
+// a billion deaths from 2026 to 2100, and 100 million within a single decade (2030s to 2090s).
+const BILLION = 1000;
+const DECADE_RUNG = 100;
 
-// FutureSearch, one run on 7 Oct (docs/climate-futuresearch-2026-10-07.md), thresholded mode, high effort.
-const FUTURESEARCH_URL = "https://github.com/Goodheart-Labs/globalriskodds/blob/main/docs/climate-futuresearch-2026-10-07.md";
-const FUTURESEARCH: Record<number, number> = { 10: 0.93, 30: 0.67, 100: 0.32, 300: 0.1, 1000: 0.02 };
-const FUTURESEARCH_2050: Record<number, number> = { 3: 0.9, 10: 0.53, 30: 0.14, 100: 0.02 };
+// FutureSearch, one run on 18 Nov (docs/climate-futuresearch-2026-11-18.md), thresholded mode, high effort.
+// The 7 Oct run (docs/climate-futuresearch-2026-10-07.md) gave 2% for a billion by 2100.
+const FUTURESEARCH_URL = "https://github.com/Goodheart-Labs/globalriskodds/blob/main/docs/climate-futuresearch-2026-11-18.md";
+const FUTURESEARCH: Record<number, number> = { 100: 0.53, 300: 0.22, 500: 0.12, 1000: 0.06, 2000: 0.02 };
+const FUTURESEARCH_DECADE: Record<number, number> = { 10: 0.74, 30: 0.39, 100: 0.12, 300: 0.04, 1000: 0.01 };
 
-// Claude's model: scripts/climate_deaths_model.py, run 7 Oct (docs/climate-deaths-model.md).
+// Claude's model: scripts/climate_deaths_model.py, run 7 Oct, deadliest-decade output added 18 Nov
+// (docs/climate-deaths-model.md).
 const MODEL_URL = "https://github.com/Goodheart-Labs/globalriskodds/blob/main/docs/climate-deaths-model.md";
-const MODEL: Record<number, number> = { 10: 0.617, 30: 0.564, 100: 0.415, 300: 0.122, 1000: 0.003 };
+const MODEL: Record<number, number> = { 100: 0.415, 300: 0.122, 1000: 0.003 };
+const MODEL_DECADE: Record<number, number> = { 30: 0.367, 100: 0.048, 300: 0.007, 1000: 0.001 };
+
+const ROWS = [
+  { key: "billion", label: "1 billion by 2100", model: MODEL[BILLION], fs: FUTURESEARCH[BILLION] },
+  { key: "decade", label: "100 million in one decade", model: MODEL_DECADE[DECADE_RUNG], fs: FUTURESEARCH_DECADE[DECADE_RUNG] },
+] as const;
 
 // Each row in millions: middle, then the 80% range (P10–P90). Order matches the table.
 const PATHWAYS: { label: string; mid: number; lo: number; hi: number; cite: string[] }[] = [
@@ -136,12 +138,14 @@ const STATEMENTS: Statement[] = [
   { id: "park", text: "\"Of the 46,401 (1960s) to 98,748 (2010s) annual fire PM2.5 mortalities, 669 (1.2%, 1960s) to 12,566 (12.8%, 2010s) were attributed to climate change.\"", source: "Park et al. 2024, Nature Climate Change", url: PARK_URL },
   { id: "mach", text: "\"Across the experts, best estimates are that 3–20% of conflict risk over the last century has been influenced by climate variability or change.\"", source: "Mach et al. 2019, Nature", url: MACH_URL },
   { id: "wyman", text: "A World Economic Forum report with Oliver Wyman: \"we project as many as 14.5 million additional deaths and $12.5 trillion in economic losses by 2050\", with floods \"accounting for 8.5 million deaths by 2050\".", source: "Oliver Wyman, Jan 2024", url: WYMAN_URL },
-  { id: "model", text: `Claude's model adds up the pathways above, each a range taken from the studies, and finds a ${pct(MODEL[100])} chance of more than 100 million net deaths from 2026 to 2100 on current policies (middle ${MODEL_TOTAL.mid} million).`, source: "Claude Opus 5.5, 7 Oct 2026 · working ↗", url: MODEL_URL },
-  { id: "cascade", text: "Claude's judgment: a 3% chance of a systemic crisis the pathway studies can't see (several breadbaskets failing at once, famine feeding war), killing about 100 million if it happens (80% range 20 million to 500 million).", source: "Claude Opus 5.5, 7 Oct 2026" },
+  { id: "model", text: `Claude's model adds up the pathways above, each a range taken from the studies, and finds a ${pct(MODEL[BILLION])} chance of more than a billion net deaths from 2026 to 2100 on current policies (middle ${MODEL_TOTAL.mid} million), and a ${pct(MODEL_DECADE[DECADE_RUNG])} chance that the deadliest single decade kills more than 100 million.`, source: "Claude Opus 5.5, 7 Oct 2026 · working ↗", url: MODEL_URL },
+  { id: "fs", text: "\"The central estimate for net climate-attributable deaths under the current policy trajectory sits near 100 million, placing the probability of exceeding 100 million at 53%.\"", source: "FutureSearch, 18 Nov 2026 · reasoning ↗", url: FUTURESEARCH_URL },
+  { id: "cascade", text: "Claude's judgment: a 3% chance of a systemic crisis the pathway studies can't see (several breadbaskets failing at once, famine feeding war), killing about 100 million if it happens (80% range 20 million to 500 million). On 18 Nov this term was taken to cover ecosystem collapse too (ocean food webs, pollinators), rather than adding a separate one.", source: "Claude Opus 5.5, 7 Oct and 18 Nov 2026" },
 ];
 
 function pct(x: number): string {
-  if (x < 0.01) return x < 0.005 ? "<1%" : "1%";
+  if (x < 0.001) return "<0.1%";
+  if (x < 0.01) return `${(x * 100).toFixed(1)}%`;
   return `${Math.round(x * 100)}%`;
 }
 
@@ -155,14 +159,14 @@ const millions = (m: number) => {
 function Hero({ p }: { p: number }) {
   return (
     <header className="not-prose mx-auto mb-10 max-w-3xl text-center">
-      <h1 className="mx-auto" style={SERIF}>Will climate change kill 100 million people?</h1>
+      <h1 className="mx-auto" style={SERIF}>Will climate change kill a billion people?</h1>
       <p className="mt-2 text-base opacity-70">By 2100, if countries keep the policies they have now</p>
       <p className="mt-8 text-6xl sm:text-7xl leading-none tracking-tight" style={{ ...SERIF, color: probabilityColor(p) }}>
         {probabilityWord(p)}
       </p>
       <p className="mx-auto mt-4 max-w-xl text-lg text-balance">
-        About {pct(p)} that climate change kills more than 100 million people between 2026 and 2100, counting the
-        deaths it causes minus the cold deaths it prevents.
+        About {pct(p)} that climate change kills more than a billion people between 2026 and 2100, counting the
+        deaths it causes minus the cold deaths it prevents. That would be about 13 million deaths a year, every year.
       </p>
     </header>
   );
@@ -179,27 +183,29 @@ function Marker({ at, color, shape, title }: { at: number; color: string; shape:
   );
 }
 
-/** The ladder: one row per death toll, each showing both forecasts and their middle. */
+/** Two rows, a billion by 2100 and 100 million in one decade, each showing both forecasts and their middle.
+ *  The axis runs to SCALE, since every number here is small. */
+const SCALE = 0.1;
 function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
   return (
     <figure className="not-prose mx-auto mb-14 max-w-3xl">
       <figcaption className="mb-3 text-center text-sm opacity-70">Chance that climate change kills more than…</figcaption>
       <div>
-        {RUNGS.map((r) => {
-          const mid = median([MODEL[r.m], FUTURESEARCH[r.m]]);
-          const headline = r.m === HEADLINE_RUNG;
+        {ROWS.map((r) => {
+          const mid = median([r.model, r.fs]);
+          const headline = r.key === "billion";
           return (
-            <div key={r.m}
-              className={`grid grid-cols-[5.5rem_1fr_3rem] items-center gap-3 border-b border-base-300 py-3 sm:grid-cols-[7rem_1fr_3.5rem] ${headline ? "bg-base-200/60" : ""}`}>
+            <div key={r.key}
+              className={`grid grid-cols-[7rem_1fr_3.5rem] items-center gap-3 border-b border-base-300 py-3 sm:grid-cols-[10rem_1fr_4rem] ${headline ? "bg-base-200/60" : ""}`}>
               <div className={`text-right text-sm sm:text-base ${headline ? "font-bold" : ""}`} style={SERIF}>{r.label}</div>
               <div className="relative h-6">
                 <div className="absolute inset-x-0 top-1/2 h-px bg-base-content/20" />
                 <div className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-r"
-                  style={{ width: `${mid * 100}%`, backgroundColor: MIDDLE_COLOR, opacity: headline ? 0.85 : 0.45 }} />
-                <Marker at={MODEL[r.m]} color={MODEL_COLOR} shape="circle" title={`Claude's model: ${pct(MODEL[r.m])}`} />
-                <Marker at={FUTURESEARCH[r.m]} color={FUTURESEARCH_COLOR} shape="diamond" title={`FutureSearch: ${pct(FUTURESEARCH[r.m])}`} />
-                {r.m === 1000 && metaculusTail !== undefined && (
-                  <Marker at={metaculusTail} color="" shape="square" title={`Metaculus, a tenth of humanity within five years: ${pct(metaculusTail)}`} />
+                  style={{ width: `${Math.min(mid / SCALE, 1) * 100}%`, backgroundColor: MIDDLE_COLOR, opacity: headline ? 0.85 : 0.45 }} />
+                <Marker at={r.model / SCALE} color={MODEL_COLOR} shape="circle" title={`Claude's model: ${pct(r.model)}`} />
+                <Marker at={r.fs / SCALE} color={FUTURESEARCH_COLOR} shape="diamond" title={`FutureSearch: ${pct(r.fs)}`} />
+                {headline && metaculusTail !== undefined && (
+                  <Marker at={metaculusTail / SCALE} color="" shape="square" title={`Metaculus, a tenth of humanity within five years: ${pct(metaculusTail)}`} />
                 )}
               </div>
               <div className={`text-right tabular-nums ${headline ? "text-xl font-bold" : "text-lg"}`} style={SERIF}>{pct(mid)}</div>
@@ -207,9 +213,9 @@ function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
           );
         })}
       </div>
-      <div className="mt-1 grid grid-cols-[5.5rem_1fr_3rem] gap-3 text-[10px] opacity-50 sm:grid-cols-[7rem_1fr_3.5rem]">
+      <div className="mt-1 grid grid-cols-[7rem_1fr_3.5rem] gap-3 text-[10px] opacity-50 sm:grid-cols-[10rem_1fr_4rem]">
         <span />
-        <div className="flex justify-between tabular-nums"><span>0%</span><span>50%</span><span>100%</span></div>
+        <div className="flex justify-between tabular-nums"><span>0%</span><span>5%</span><span>10%</span></div>
         <span />
       </div>
       <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
@@ -255,9 +261,15 @@ function Summary() {
         last century.{c("mach")} At the high end, one consultancy projects 14.5 million deaths by 2050.{c("wyman")}
       </p>
       <p>
-        Claude's model and FutureSearch both put the middle of the range near 60 million deaths.{c("model")} They differ
-        on the tails. The model takes the studies' wide ranges at face value, which leaves about a one-in-three chance
-        that warming saves more lives than it costs; FutureSearch treats that as close to impossible.
+        Claude's model puts the middle near 60 million deaths by 2100,{c("model")} and FutureSearch near
+        100 million.{c("fs")} That is roughly one million a year, a long way short of a billion. None of the pathways
+        above gets there, even at the top of its range.
+      </p>
+      <p>
+        A billion deaths would take a collapse the studies don't model: several breadbaskets failing at once, ocean
+        food webs or pollinators giving way, famine feeding war.{c("cascade")} The two forecasts disagree most here.
+        Claude's model gives that kind of collapse a small chance and a toll near 100 million; FutureSearch gives a
+        billion deaths {pct(FUTURESEARCH[BILLION])}.
       </p>
     </div>
   );
@@ -288,7 +300,7 @@ function Pathways() {
             </tr>
           ))}
           <tr className="border-b border-base-300">
-            <td className="py-2 pr-2">A collapse the studies can't see{c(["cascade"])}</td>
+            <td className="py-2 pr-2">A collapse the studies can't see: food systems, ecosystems, famine and war{c(["cascade"])}</td>
             <td className="py-2 text-right text-xs opacity-80" colSpan={2}>3% chance, ~100M if so</td>
           </tr>
           <tr className="font-semibold">
@@ -316,12 +328,12 @@ function FutureSearchCard() {
     <VotedCard slot="climate:futuresearch">
       <div className="card-body">
         <h3 className="card-title text-lg mb-1">FutureSearch AI forecast</h3>
-        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="text-xs underline opacity-65 hover:opacity-100">7 October · reasoning ↗</a>
+        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="text-xs underline opacity-65 hover:opacity-100">18 November · reasoning ↗</a>
         <div className="my-6 grid grid-cols-2 gap-4">
-          {big(pct(FUTURESEARCH[100]), "Over 100 million dead by 2100")}
-          {big(pct(FUTURESEARCH_2050[10]), "Over 10 million dead by 2050")}
+          {big(pct(FUTURESEARCH[BILLION]), "Over a billion dead by 2100")}
+          {big(pct(FUTURESEARCH_DECADE[DECADE_RUNG]), "Over 100 million dead in one decade")}
         </div>
-        <p className="text-sm opacity-70">Its middle estimate for 2026–2100 is 55–60 million deaths.</p>
+        <p className="text-sm opacity-70">Its middle estimate for 2026–2100 is about 100 million deaths. In October, asked without ecosystem collapse, it said 55–60 million.</p>
         <ChartVote slot="climate:futuresearch" mode="expanded" />
       </div>
     </VotedCard>
@@ -357,7 +369,7 @@ function ClimatePage() {
   const { data } = useSuspenseQuery(simpleMarketsQuery);
   const markets = data as Market[];
 
-  const p = median([MODEL[HEADLINE_RUNG], FUTURESEARCH[HEADLINE_RUNG]]);
+  const p = median([MODEL[BILLION], FUTURESEARCH[BILLION]]);
   // Metaculus cross-check for the top rung: a tenth of humanity dies within five years (1493), times the
   // chance climate is the main cause if so (1500).
   const prob = (group: string) => markets.find((m) => m.chartGroup === group)?.probability;
@@ -370,7 +382,7 @@ function ClimatePage() {
   return (
     <TopicDashboard
       topic={TOPIC}
-      title="Will climate change kill 100 million people?"
+      title="Will climate change kill a billion people?"
       markets={markets}
       groupTitles={GROUP_TITLES}
       groupResolutions={GROUP_RESOLUTION}

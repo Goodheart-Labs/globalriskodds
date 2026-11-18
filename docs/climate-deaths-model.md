@@ -2,7 +2,7 @@
 
 The question: how many people will climate change kill between 2026 and 2100 if countries keep the policies they have (about 2.6–2.8°C by 2100)? The count is net. It is deaths caused minus deaths prevented (mostly cold deaths), measured against a world without human-caused warming.
 
-Re-run: `python3 scripts/climate_deaths_model.py` (standard library, about 12 s). Run 7 October 2026 by Claude Opus 5.5.
+Re-run: `python3 scripts/climate_deaths_model.py` (standard library, about 30 s). Run 7 October 2026 by Claude Opus 5.5.
 
 ## Result
 
@@ -15,6 +15,20 @@ Re-run: `python3 scripts/climate_deaths_model.py` (standard library, about 12 s)
 | 1 billion | 0.3% |
 
 Total: P10 −130M, median 58M, mean 86M, P90 330M.
+
+### Deadliest single decade (added 18 November 2026)
+
+The page now asks about a billion by 2100 and 100 million within one decade. The model spreads each draw over the years: heat and cold year by year as before, the other pathways in proportion to warming above 1.4°C (power 1.5), and the systemic collapse into one decade, drawn with the same weights. It then takes the worst of the 2030s to the 2090s. Timing uses its own random stream, so the totals above are unchanged draw for draw.
+
+| Deadliest decade kills more than | P |
+|---|---|
+| 10 million | 55% |
+| 30 million | 37% |
+| 100 million | **4.8%** |
+| 300 million | 0.7% |
+| 1 billion | 0.1% |
+
+Deadliest decade: P10 −7M, median 15M, P90 77M. Ecosystem collapse (ocean food webs, pollinators) is counted inside the systemic-collapse term, not as a separate pathway; no study gives a mortality range to build one from.
 
 ## Pathways
 
