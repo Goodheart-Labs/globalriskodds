@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -105,8 +106,6 @@ const PATHWAYS: { label: string; mid: number; lo: number; hi: number; cite: stri
 const MODEL_TOTAL = { mid: 58, lo: -130, hi: 330 };
 
 const MIDDLE_COLOR = "#B45309";
-const MODEL_COLOR = "#0EA5E9";
-const FUTURESEARCH_COLOR = "#7C3AED";
 
 const CAT_URL = "https://climateactiontracker.org/press/release-global-update-2025/";
 const UNEP_URL = "https://news.un.org/en/story/2025/11/1166255";
@@ -140,6 +139,7 @@ const STATEMENTS: Statement[] = [
   { id: "wyman", text: "A World Economic Forum report with Oliver Wyman: \"we project as many as 14.5 million additional deaths and $12.5 trillion in economic losses by 2050\", with floods \"accounting for 8.5 million deaths by 2050\".", source: "Oliver Wyman, Jan 2024", url: WYMAN_URL },
   { id: "model", text: `Claude's model adds up the pathways above, each a range taken from the studies, and finds a ${pct(MODEL[BILLION])} chance of more than a billion net deaths from 2026 to 2100 on current policies (middle ${MODEL_TOTAL.mid} million), and a ${pct(MODEL_DECADE[DECADE_RUNG])} chance that the deadliest single decade kills more than 100 million.`, source: "Claude Opus 5.5, 7 Oct 2026 (decade figure 18 Nov) · working ↗", url: MODEL_URL },
   { id: "fs", text: "\"The central estimate for net climate-attributable deaths under the current policy trajectory sits near 100 million, placing the probability of exceeding 100 million at 53%.\"", source: "FutureSearch, 18 Nov 2026 · reasoning ↗", url: FUTURESEARCH_URL },
+  { id: "fs-warming", text: "\"The forecast for the 2046–2055 decade-average global temperature anomaly centers around 2.08 °C above the 1850–1900 baseline, with an 80% confidence interval of roughly 1.79 to 2.40 °C.\" For 2091–2100 it gives a median of 2.57°C, 80% range 1.87–3.5°C.", source: "FutureSearch, 18 Nov 2026 · reasoning ↗", url: FUTURESEARCH_URL },
   { id: "cascade", text: "Claude's judgment: a 3% chance of a systemic crisis the pathway studies can't see (several breadbaskets failing at once, famine feeding war), killing about 100 million if it happens (80% range 20 million to 500 million). On 18 Nov this term was taken to cover ecosystem collapse too (ocean food webs, pollinators), rather than adding a separate one.", source: "Claude Opus 5.5, 7 Oct and 18 Nov 2026" },
 ];
 
@@ -172,21 +172,10 @@ function Hero({ p }: { p: number }) {
   );
 }
 
-function Marker({ at, color, shape, title }: { at: number; color: string; shape: "circle" | "diamond" | "square"; title: string }) {
-  const base = "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2";
-  const style = { left: `${Math.min(Math.max(at, 0), 1) * 100}%` };
-  if (shape === "square") return <span title={title} aria-label={title} className={`${base} border-2 border-base-content bg-base-100`} style={style} />;
-  return (
-    <span title={title} aria-label={title}
-      className={`${base} ${shape === "circle" ? "rounded-full" : "rotate-45"} ring-2 ring-base-100`}
-      style={{ ...style, backgroundColor: color }} />
-  );
-}
-
-/** Two rows, a billion by 2100 and 100 million in one decade, each showing both forecasts and their middle.
- *  The axis runs to SCALE, since every number here is small. */
-const SCALE = 0.2;
+/** Two rows, a billion by 2100 and 100 million in one decade. Each bar is the middle of the two forecasts on a
+ *  0–100% axis; the forecasts themselves are written underneath. */
 function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
+  const link = "underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content";
   return (
     <figure className="not-prose mx-auto mb-14 max-w-3xl">
       <figcaption className="mb-3 text-center text-sm opacity-70">Chance that climate change kills more than…</figcaption>
@@ -195,40 +184,28 @@ function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
           const mid = median([r.model, r.fs]);
           const headline = r.key === "billion";
           return (
-            <div key={r.key}
-              className={`grid grid-cols-[7rem_1fr_3.5rem] items-center gap-3 border-b border-base-300 py-3 sm:grid-cols-[10rem_1fr_4rem] ${headline ? "bg-base-200/60" : ""}`}>
-              <div className={`text-right text-sm sm:text-base ${headline ? "font-bold" : ""}`} style={SERIF}>{r.label}</div>
-              <div className="relative h-6">
-                <div className="absolute inset-x-0 top-1/2 h-px bg-base-content/20" />
-                <div className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-r"
-                  style={{ width: `${Math.min(mid / SCALE, 1) * 100}%`, backgroundColor: MIDDLE_COLOR, opacity: headline ? 0.85 : 0.45 }} />
-                <Marker at={r.model / SCALE} color={MODEL_COLOR} shape="circle" title={`Claude's model: ${pct(r.model)}`} />
-                <Marker at={r.fs / SCALE} color={FUTURESEARCH_COLOR} shape="diamond" title={`FutureSearch: ${pct(r.fs)}`} />
-                {headline && metaculusTail !== undefined && (
-                  <Marker at={metaculusTail / SCALE} color="" shape="square" title={`Metaculus, a tenth of humanity within five years: ${pct(metaculusTail)}`} />
-                )}
+            <div key={r.key} className="border-b border-base-300 py-4">
+              <div className="grid grid-cols-[7rem_1fr_3.5rem] items-center gap-3 sm:grid-cols-[10rem_1fr_4rem]">
+                <div className={`text-right text-sm sm:text-base ${headline ? "font-bold" : ""}`} style={SERIF}>{r.label}</div>
+                <div className="h-2 rounded-full bg-base-content/10">
+                  <div className="h-2 rounded-full" style={{ width: `${mid * 100}%`, minWidth: 4, backgroundColor: MIDDLE_COLOR }} />
+                </div>
+                <div className={`text-right tabular-nums ${headline ? "text-xl font-bold" : "text-lg"}`} style={SERIF}>{pct(mid)}</div>
               </div>
-              <div className={`text-right tabular-nums ${headline ? "text-xl font-bold" : "text-lg"}`} style={SERIF}>{pct(mid)}</div>
+              <p className="mt-1.5 text-xs opacity-60 sm:pl-[calc(10rem+0.75rem)] pl-[calc(7rem+0.75rem)]">
+                <a href={MODEL_URL} target="_blank" rel="noopener noreferrer" className={link}>Claude's model</a> {pct(r.model)}
+                {" · "}
+                <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className={link}>FutureSearch</a> {pct(r.fs)}
+                {headline && metaculusTail !== undefined && <>{" · "}Metaculus, a tenth of humanity in five years {pct(metaculusTail)}</>}
+              </p>
             </div>
           );
         })}
       </div>
       <div className="mt-1 grid grid-cols-[7rem_1fr_3.5rem] gap-3 text-[10px] opacity-50 sm:grid-cols-[10rem_1fr_4rem]">
         <span />
-        <div className="flex justify-between tabular-nums"><span>0%</span><span>10%</span><span>20%</span></div>
+        <div className="flex justify-between tabular-nums"><span>0%</span><span>50%</span><span>100%</span></div>
         <span />
-      </div>
-      <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
-        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-5 rounded-r" style={{ backgroundColor: MIDDLE_COLOR }} />Middle of the two</span>
-        <a href={MODEL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline">
-          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: MODEL_COLOR }} />Claude's model ↗
-        </a>
-        <a href={FUTURESEARCH_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline">
-          <span className="h-2.5 w-2.5 rotate-45" style={{ backgroundColor: FUTURESEARCH_COLOR }} />FutureSearch ↗
-        </a>
-        {metaculusTail !== undefined && (
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 border-2 border-base-content" />Metaculus: a tenth of humanity dies within five years from climate</span>
-        )}
       </div>
     </figure>
   );
@@ -272,6 +249,57 @@ function Summary() {
         billion deaths {pct(FUTURESEARCH[BILLION])}.
       </p>
     </div>
+  );
+}
+
+// FutureSearch numeric run, 18 Nov (docs/climate-futuresearch-2026-11-18.md): what warming will actually be,
+// decade averages above 1850–1900, P10 / P50 / P90 in °C.
+const FS_WARMING = { "2050s": { p10: 1.793, p50: 2.077, p90: 2.403 }, "2090s": { p10: 1.867, p50: 2.567, p90: 3.5 } };
+
+/** How hot it gets: forecasts and scenario numbers side by side, in °C above 1850–1900. */
+function Warming({ twoBy2037, hot36 }: { twoBy2037: number | undefined; hot36: number | undefined }) {
+  const c = (ids: string[]) => <Cite ids={ids} statements={STATEMENTS} topic={TOPIC} />;
+  const fsRange = (w: { p10: number; p50: number; p90: number }) => (
+    <>{w.p50.toFixed(1)}°C <span className="opacity-60">({w.p10.toFixed(1)}–{w.p90.toFixed(1)})</span></>
+  );
+  const rows: { label: ReactNode; mid: ReactNode; late: ReactNode }[] = [
+    { label: <>FutureSearch, what will happen{c(["fs-warming"])}</>, mid: fsRange(FS_WARMING["2050s"]), late: fsRange(FS_WARMING["2090s"]) },
+    { label: <>Climate Action Tracker, current policies{c(["cat"])}</>, mid: "—", late: "2.6°C" },
+    { label: <>UN Environment Programme, current policies{c(["unep"])}</>, mid: "—", late: "2.8°C" },
+    { label: <>IPCC, middle emissions scenario{c(["ipcc"])}</>, mid: "—", late: <>2.7°C <span className="opacity-60">(2.1–3.5)</span></> },
+    { label: <>Claude's model assumes{c(["model"])}</>, mid: "2.1°C", late: "2.6°C" },
+  ];
+  return (
+    <section className="not-prose mx-auto mb-14 max-w-[680px]">
+      <SectionLabel>How hot will it get?</SectionLabel>
+      <p className="mt-2 text-sm opacity-70">Warming above 1850–1900, around 2050 and by 2100. 80% ranges in brackets.</p>
+      <table className="mt-3 w-full text-sm">
+        <thead>
+          <tr className="border-b border-base-content/40 text-left text-xs opacity-70">
+            <th className="py-2 pr-2 font-normal">Source</th>
+            <th className="py-2 pr-2 text-right font-normal">2050</th>
+            <th className="py-2 text-right font-normal">2100</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b border-base-300">
+              <td className="py-2 pr-2">{r.label}</td>
+              <td className="py-2 pr-2 text-right tabular-nums whitespace-nowrap">{r.mid}</td>
+              <td className="py-2 text-right tabular-nums whitespace-nowrap">{r.late}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {(twoBy2037 !== undefined || hot36 !== undefined) && (
+        <p className="mt-3 text-sm">
+          Metaculus forecasters give
+          {twoBy2037 !== undefined && <> {Math.round(twoBy2037)}% to a single year above 2°C by 2037</>}
+          {twoBy2037 !== undefined && hot36 !== undefined && " and"}
+          {hot36 !== undefined && <> {Math.round(hot36)}% to five years in a row above 3.6°C before 2100</>}.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -389,7 +417,7 @@ function ClimatePage() {
       groupKeys={CLIMATE_GROUPS}
       header={<><Hero p={p} /><Ladder metaculusTail={metaculusTail} /></>}
       voteMode="expanded"
-      intro={<><Summary /><Pathways /><SectionLabel>Nearby questions</SectionLabel></>}
+      intro={<><Summary /><Warming twoBy2037={prob("warming_2c_2037")} hot36={prob("warming_3_6c")} /><Pathways /><SectionLabel>Nearby questions</SectionLabel></>}
       extraCards={<><FutureSearchCard /><SuggestCard /></>}
       footer={<Sources statements={STATEMENTS} topic={TOPIC} />}
     />

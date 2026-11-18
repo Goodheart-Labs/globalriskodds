@@ -35,3 +35,9 @@ async def main():
     print(out.drop(columns=[c for c in out.columns if c in ("rationale",)]).to_string())
 
 asyncio.run(main())
+
+# The warming forecasts on the same page were a second, numeric call (run 18 Nov):
+#   forecast(input=DataFrame(rows), forecast_type="numeric", output_field="warming",
+#            units="°C above 1850-1900", effort_level="high")
+# with rows asking for the 2046-2055 and 2091-2100 decade averages, resolved on the WMO's
+# consolidated datasets (Berkeley Earth as fallback), no policy assumption.
