@@ -24,12 +24,14 @@ ROWS = [
   "thresholds": ["more than 10 million in one decade", "more than 30 million in one decade", "more than 100 million in one decade", "more than 300 million in one decade", "more than 1 billion in one decade"]},
 ]
 
+OUT = sys.argv[1]  # read before the paid run, so a missing path fails fast
+
 async def main():
     df = DataFrame([{k: v for k, v in r.items() if k != "key"} for r in ROWS])
     res = await forecast(input=df, forecast_type="thresholded", thresholds_field="thresholds", effort_level="high")
     out = res.data.copy()
     out.insert(0, "key", [r["key"] for r in ROWS])
-    out.to_json(sys.argv[1], orient="records", indent=1, default_handler=str)
+    out.to_json(OUT, orient="records", indent=1, default_handler=str)
     print(out.drop(columns=[c for c in out.columns if c in ("rationale",)]).to_string())
 
 asyncio.run(main())

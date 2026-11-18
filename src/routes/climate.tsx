@@ -138,7 +138,7 @@ const STATEMENTS: Statement[] = [
   { id: "park", text: "\"Of the 46,401 (1960s) to 98,748 (2010s) annual fire PM2.5 mortalities, 669 (1.2%, 1960s) to 12,566 (12.8%, 2010s) were attributed to climate change.\"", source: "Park et al. 2024, Nature Climate Change", url: PARK_URL },
   { id: "mach", text: "\"Across the experts, best estimates are that 3–20% of conflict risk over the last century has been influenced by climate variability or change.\"", source: "Mach et al. 2019, Nature", url: MACH_URL },
   { id: "wyman", text: "A World Economic Forum report with Oliver Wyman: \"we project as many as 14.5 million additional deaths and $12.5 trillion in economic losses by 2050\", with floods \"accounting for 8.5 million deaths by 2050\".", source: "Oliver Wyman, Jan 2024", url: WYMAN_URL },
-  { id: "model", text: `Claude's model adds up the pathways above, each a range taken from the studies, and finds a ${pct(MODEL[BILLION])} chance of more than a billion net deaths from 2026 to 2100 on current policies (middle ${MODEL_TOTAL.mid} million), and a ${pct(MODEL_DECADE[DECADE_RUNG])} chance that the deadliest single decade kills more than 100 million.`, source: "Claude Opus 5.5, 7 Oct 2026 · working ↗", url: MODEL_URL },
+  { id: "model", text: `Claude's model adds up the pathways above, each a range taken from the studies, and finds a ${pct(MODEL[BILLION])} chance of more than a billion net deaths from 2026 to 2100 on current policies (middle ${MODEL_TOTAL.mid} million), and a ${pct(MODEL_DECADE[DECADE_RUNG])} chance that the deadliest single decade kills more than 100 million.`, source: "Claude Opus 5.5, 7 Oct 2026 (decade figure 18 Nov) · working ↗", url: MODEL_URL },
   { id: "fs", text: "\"The central estimate for net climate-attributable deaths under the current policy trajectory sits near 100 million, placing the probability of exceeding 100 million at 53%.\"", source: "FutureSearch, 18 Nov 2026 · reasoning ↗", url: FUTURESEARCH_URL },
   { id: "cascade", text: "Claude's judgment: a 3% chance of a systemic crisis the pathway studies can't see (several breadbaskets failing at once, famine feeding war), killing about 100 million if it happens (80% range 20 million to 500 million). On 18 Nov this term was taken to cover ecosystem collapse too (ocean food webs, pollinators), rather than adding a separate one.", source: "Claude Opus 5.5, 7 Oct and 18 Nov 2026" },
 ];
@@ -185,7 +185,7 @@ function Marker({ at, color, shape, title }: { at: number; color: string; shape:
 
 /** Two rows, a billion by 2100 and 100 million in one decade, each showing both forecasts and their middle.
  *  The axis runs to SCALE, since every number here is small. */
-const SCALE = 0.1;
+const SCALE = 0.2;
 function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
   return (
     <figure className="not-prose mx-auto mb-14 max-w-3xl">
@@ -215,7 +215,7 @@ function Ladder({ metaculusTail }: { metaculusTail: number | undefined }) {
       </div>
       <div className="mt-1 grid grid-cols-[7rem_1fr_3.5rem] gap-3 text-[10px] opacity-50 sm:grid-cols-[10rem_1fr_4rem]">
         <span />
-        <div className="flex justify-between tabular-nums"><span>0%</span><span>5%</span><span>10%</span></div>
+        <div className="flex justify-between tabular-nums"><span>0%</span><span>10%</span><span>20%</span></div>
         <span />
       </div>
       <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
